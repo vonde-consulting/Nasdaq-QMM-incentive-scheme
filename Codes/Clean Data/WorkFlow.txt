@@ -1,0 +1,20 @@
+(1) Prep3.m // AggregateCleaned_Data_3.do
+(2) CalculateIntervalVariables_v1
+	-Temporary output deleted
+(3) ConsolidateIntervalVariables_v1
+	-Output saved in folder "Trader Anonymity/Data/Data/"
+(4) Hasbrouck Errors
+	-Calculates and Consolidates Hasbrouck Errors
+(5) CalculateIntervalVariables_v2 [**INCLUDES ADDITIONAL VARIABLES CALCULATED FOR TMBR**]
+	-Temporary output deleted
+	-Attempted on both PC and WU Cluster (WU Cluster final version)
+(6) ConsolidateIntervalVariables_v2
+	-Output saved in folder "Trader Anonymity/Data/Data2/"
+(7) CreateStataData_20180528
+	-Combines output variables from steps #3, #4 and #6.
+(8) SaveDataset.Do
+	-creates instruments
+	-output: "DATA_FULL2_*sec.dta"
+	-data saved to "Trader Anonymity/Data/"
+(9) Generate Mill Ratio
+	-creates Mills Ratio for use in Hasbrouck estimation

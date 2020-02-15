@@ -1,0 +1,1303 @@
+\documentclass{article}
+\usepackage{geometry, graphicx, array, caption, amsmath, tikz,lscape}
+\usepackage{multirow}
+%\usepackage{subfigure}
+\usepackage{lscape}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\usetikzlibrary{shapes,positioning,fit,backgrounds}
+\usepackage{subcaption}
+\usepackage{dcolumn}
+\newcolumntype{d}[1]{D{.}{.}{#1}}
+\usepackage[round]{natbib}
+\usepackage[colorlinks, linkcolor=black, citecolor=black, filecolor=black, urlcolor=blue]{hyperref}
+%\usepackage{caption}
+\usepackage[labelfont=bf,font=large]{caption}
+\usepackage[hang,flushmargin]{footmisc}
+\usepackage{amsfonts}
+\usepackage{soul}
+\usepackage{adjustbox}
+\usepackage{wrapfig}
+\usepackage{parskip}
+
+
+\begin{document}
+\setlength{\parskip}{15pt}
+
+\title{Are Market Makers Incentivized to Provide Liquidity? Evidence from the Nasdaq}
+\date{Version: \today}
+\maketitle
+
+\begin{abstract}
+\noindent Abstract
+\end{abstract}
+
+\section{Economic Foundations}\label{hypothesis}
+
+The first aim of our paper is to address the question: Do market makers submit non-anonymous orders according to their obligations to act as market makers? In order to examine this question, it is of course first necessary to clarify what the purpose and function of a market maker as a provider of liquidity should be.
+
+Older definitions of liquidity provision tend to focus on liquidity providers as ``patient" traders, who submit limit orders to meet liquidity demand from market-order-submitting ``impatient" traders. The idea centers around the submission of limit orders, which lets liquidity providers smooth out the different arrival times of impatient buyers and sellers. In his seminal paper, \citet{demsetz1968cost} identifies the non-synchronous arrival of buyers and sellers into a market as one of the key frictions in financial markets. However, he proposes that this problem can be alleviated by market makers who bridge the gaps between these non-synchronous arrivals. In subsequent papers, \citet{garbade1979structural} and \citet{grossman1988liquidity} show that market makers help to mitigate order imbalances and lower execution risk for other market participants. In the words of Alvert Menkveld, this definition can be summarized succinctly as: ``[h]e whose price quote is taken by an incoming market order, supplies liquidity."\footnote{\url{http://albertjmenkveld.com/2015/02/24/who-supplies-liquidity-we-need-a-new-definition/}} According to this definition, the main role of market makers should be to serve as reliable counterparties to traders when no others are available.
+
+Guided by this intuition, if liquidity providers are indeed properly incentivized and/or obligated to act as market makers according to this definition, then submitted quotes that are attributed to a market maker MPID should reflect this role. We would expect to see a higher rate of MPID-attributed quotes when market participation rates, i.e., the submissions of orders, are low. We might also see a higher rate of MPID-attributed quotes when depth on the books is low, as this represents a low supply of limit orders. %Furthermore, market participation has been shown to drop during market downturns \citep[see, e.g.,][]{naes2011stock}; therefore, we might also expect to see a higher rate of MPID-attributed quotes following large, negative movements in prices.
+
+On the other hand, with the rise of modern electronic market structures and changing incentives for traders, some have argued that the definition of what it means to supply liquidity requires a fundamental update. According this more ``modern" definition, liquidity providers should be seen as ``contrarian" traders who prevent large pricing fluctuations by trading against pricing errors, and in this sense can supply liquidity even through aggressive or marketable orders.\footnote{Note that our dataset does not allow for the identification of MPID-attributed market orders. Therefore, price aggressiveness (the distance of a limit order to the midquote) serves as a proxy for the ``marketability" of an MPID-attributed order.}  Using a state-space model, \citet{Hendershott2014405} show that specialists on the NYSE respond to price pressures and seek to revert pricing errors by trading against them, thus showing the tendency of liquidity providers to trade against transitory price movements. Other recent papers to use this concept of liquidity provision as the provision of contra-side trades can be found, for example, in the literature on liquidity provision by institutional investors \citep[][]{franzoni2013constrains}, liquidity provision in dark pools \citep[][]{boni2013dark}, and liquidity provision by proprietary traders \citep[][]{biais2016supplies}. Again quoting Albert Menkveld, a newer definition of liquidity provision tells us that ``[h]e who trades against price pressures, supplies liquidity."\footnote{\url{http://albertjmenkveld.com/2015/02/24/who-supplies-liquidity-we-need-a-new-definition/}}. This definition tells us that the role of the market maker should be to stabilize markets in the face of price uncertainty.
+
+In this case, we would expect to see a higher rate of MPID-attributed quotes when uncertainty is high. For our purposes, uncertainty refers to an occasion in which market efficiency fails, and asset prices deviate significantly from fundamental underlying values. This is typically measured using asset volatility \citep[see, e.g.,][]{chung2014uncertainty}. Furthermore, higher uncertainty is also associated with higher illiquidity as measured by the relative bid-ask spread, as (1) illiquidity prevents information from being quickly incorporated into prices \citep[see, e.g.,][]{chordia2008liquidity}, and (2) uncertainty about prices exposes traders to higher adverse selection as in the classic ``lemons problem" of \citet{akerlof1995market}, and higher adverse selection in turn leads to higher spreads \citep[see, e.g.,][]{kyle1985continuous,huang1997components}.
+
+Note that, in terms of measurability, these roles are not necessarily mutually exclusive. As an example, if market makers are shown to increase buy-side MPID-attributed orders following periods of low buy-side depth, this could be because they are responding to a low supply of limit orders, and/or because they are responding to price pressures by sell market orders that are ``eating up" depth on the buy side side of the book. A measured reaction to low submission volume could stem from market makers' incentives to re-supply limit orders, or stem from a reaction to the substitution of market for limit orders as market participants react quickly to changing prices. Market makers may react to high volatility or relative bid-ask spreads in order to stabilize markets, or they may simply be reacting to a thin limit order book, in which spreads are wide and depth is not sufficient to absorb market orders without frequent changes in the price. However, some variables may allow us to tease out a distinction between these two different roles. If market makers submit MPID-attributed orders according to this first definition of liquidity provision, we might expect to see that MPID-attributed orders are less aggressive on average. This does not necessarily fit the role of liquidity provision according to the second definition. In the same vein, if market makers use MPID-attributed according to this second definition, then we might expect to see a higher MPID submission following large price changes, or following an increase in pricing ``noise" (as measured using the [] definition of pricing errors). If market makers's role is simply to aid in matching buyers and sellers, as according to the first definition this role should be largely independent from changes in the price. This brings us to the following hypothesis:
+
+%Lastly, as large, aggressive orders are typically associated with the highest price impact and risk of informed trading \citep[see, e.g., ][]{easley1987price,JOFI:JOFI5192,kaniel2006so}, market makers may avoid the use of such orders to further avoid any destabilizing price effects from a new submission. Therefore, market makers may be more likely to submit orders that are smaller and less aggressive.
+
+%\noindent\fbox{
+\parbox{\textwidth}{
+\noindent \textbf{Hypothesis 1}: If the MPID-attributed orders are submitted by market makers in their capacity as liquidity providers, then we should see an increase in MPID submission in response to: (a) lower submission volume; (b) lower depth; (d) higher volatility; and (e) higher bid-ask spreads. If MPID-attributed orders are submitted by market makers in the capacity to stabilize prices, then we should see an increase in MPID submission in response to: (f) large prices changes; and (g) an increase in pricing errors. If MPID-attributed orders are submitted by market makers in the capacity to serve as reliable counterparties, then MPID-attributed orders should be (g) less aggressive on average.
+}
+%}
+
+The second aim of our paper is to answer the question: How does the market react to non-anonymous orders posted by market makers? By submitting an MPID-attributed order, a market maker essentially reveals two important signals, to which the market can react. The first signal can be tied to the nature of the order as non-anonymous. Numerous papers on trader anonymity have shown that informed traders prefer to submit their orders anonymously, to prevent other traders from discovering their information or trading strategies \citep[see, e.g.,][]{grammig2001knowing,barclay2003competition,comerton2011traders}. Therefore, the act of MPID revelation itself may signal to the market that the trade contains a lack of information. This may serve to lower adverse selection (and thus lower relative bid-ask spreads). A reduction in adverse selection may encourage participation from risk averse traders. Following \citet{harris1997order}, orders that are more transparent encourage participation from defensive, ``reactive" traders,  who wait to be presented with valuable trading opportunities rather than initiating a trade and potentially exposing themselves to informed trades. This may encourage market participation in the form of higher submission and execution volumes, and higher depth.
+
+The second signal stems from the fact that, since the MPID reveals the full identity of the submitter, MPID attribution also reveals that the order is submitted by a market maker. Given regulatory concern over low investor confidence in liquidity providers since the 2010 Flash Crash, the revealed presence of a reliable liquidity provider may serve to boost investor confidence and stabilize uncertain markets \citep[see, e.g.,][]{watanabe2015,anand2016market}. As a result, we might see lower volatility in response to an MPID-attributed order. Same-side order flow may increase, as an MPID-attributed order is viewed as ``anchoring" the price on the side of the book (buy or sell) to which it is submitted. This leads to the following hypothesis:
+
+%\noindent\fbox{
+\parbox{\textwidth}{
+\noindent \textbf{Hypothesis 2}: If the MPID-attributed orders are submitted by market participants in their capacity as market makers, then in response to higher rates of MPID submission we should see: (a) higher execution and submission volume; (b) higher depth;  (c) lower bid-ask spreads; and (d) lower volatility.
+}
+
+%}
+
+\noindent On the other hand, the literature shows a range of alternative motivations that can drive the determinants of and reactions to market maker order submissions, particularly within the context of market transparency. \citet{simaan2003market} argue that non-anonymity allows market makers to form a regime that enforces an implicit collusion to keep spreads wide, in which defecting market makers can be identified and punished. Furthermore, market makers are occasionally treated in the literature as informed traders, as they can receive information from either their associated clients \citep{saporta1997inter,naik1999trade} or make inferences from their knowledge of order flow, particularly in the the case of high-frequency market makers \citep{vayanos2001strategic,van2016high,malinova2016modern}.\footnote{Other prominent examples include \citet{boulatov2013hidden} and \citet{kaniel2006so}, who examine the endogenous choice of informed traders to submit limit or market orders. \citet{kaniel2006so} shows that informed traders with long-lived information tend to prefer limit orders, and that price impacts following limit orders tend to be higher.} As argued by \citet{karam2012}, the fact that market makers are constrained to provide MPID-attributed quotes increases the likelihood that even their non-anonymous quotes will contain some degree of their information. Furthermore, \citet{reiss2005anonymity} show that, even when an anonymous market is available, market makers prefer to submit their informed trades non-anonymously, in order to avoid a downward spiral in which too many anonymous informed trades increase adverse selection and crowd out liquidity. Lastly, market makers may also use their MPID-attributed orders in attempts to ``bluff" the market. \citet{foucault2013market} and \citet{karam2012} argue that, when market makers are aware that their orders will signal information, they will post non-anonymous quotes at the best bid or ask when spreads are large.
+
+\noindent Overall, if market makers are indeed properly incentivized and/or obligated to use their MPID-attributed orders to encourage market participation and to stabilize markets, then these incentives should be reflected in the MPID's strategic choice of when to submit a non-anonymous order, as well as reflected in the market's reaction to an MPID-attributed order. Deviations from Hypothesis 1 and Hypothesis 2 should reflect an alternative motivation for the market maker's submission of MPID-attributed orders, and thus a deviation from the principal goals of exchange-mandated market maker incentive programs.
+
+\section{Data}
+
+Data is obtained from LOBSTER\footnote{Limit Order Book System -- The Efficient Reconstructor; see \url{https://lobsterdata.com/}.} Academic Data, an online data tool that reconstructs the limit order book for the universe of Nasdaq stocks using the Nasdaq TotalView-ITCH direct data feed. The dataset includes order book data on prevailing bid and ask quotes and depths at up to 200 price levels, as well as message files that contain updates to the limit order book. This includes information on the type of event (submissions, partial or total cancellations, and executions of visible or hidden orders), the number of shares, price, direction (buy or sell), and time stamp (to the nanosecond) of the order that the event concerns, as well as a unique order reference number that allows us to track the submission and eventual execution or cancellation of the order. In addition, our data sample uniquely contains information on the Market Participant Identification Number (MPID). This will be described in more detail in Section~\ref{subsec:MMID}.
+
+\noindent The main sample in this analysis is composed of eight Nasdaq-listed firms, mostly in the high-tech industry. These firms include: Apple, Inc. (AAPL); Cisco Systems, Inc. (CSCO); eBay, Inc. (EBAY); Facebook, Inc. (FB); Google, Inc. (GOOG); Intel Corporation (INTC); Microsoft Corporation (MSFT), and Yahoo! Inc. (YHOO). The sample time period includes 14 trading days in November 2013, from 4 November to 22 November 2013.\footnote{It was necessary to exclude 11 November 2013 due to corrupt data files.} Summary statistics for the stock prices, returns, and order flow for these firms is presented in Table~\ref{tab:desstats}. From the summary statistics we can see, first, a wide dispersion in share prices between the sample stocks. The two highest-priced stocks (GOOG, at \$1025.43; and AAPL, at \$521.25) are particularly distinct from the other stocks, as they have stocks prices that are an order of magnitude higher than the next highest-priced stock (EBAY, at \$51.94). Furthermore, these stocks also differ widely in terms of order flow. While GOOG has just over 5,000 average daily trades, FB has nearly eleven times as mainly, at nearly 55,000 average daily trades. Lastly, five out of the eight stocks experience, on average, negative daily returns, implying that this time period may be in one in which the market is in particular need of stable liquidity provision by market makers. Also reported for each firms are the percentages of total order submissions that are attributed to an MPID. MPID-attribution rates range from a low of 1.61\% for MSFT, to a high of $6.8ß\%$ for FB.
+
+\begin{table}[h!]
+\caption{Sample Stocks Descriptive Statistics} \label{tab:desstats}
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{p{2.5in}>{\centering\arraybackslash}m{1in}>{\centering\arraybackslash}m{1in}>{\centering\arraybackslash}m{1in}>{\centering\arraybackslash}m{1in}>{\centering\arraybackslash}m{1in}} \hline
+  \hline
+\multicolumn{6}{c}{}\\
+     & \textbf{Mean} & \textbf{Median} & \textbf{Std. Dev.} & \textbf{Min.} & \textbf{Max.} \\
+\textbf{AAPL} \\
+Average Stock Price (USD)            & 521.25     & 520.43     & 3.66       & 512.38    & 529.27        \\
+Daily Return (bp)                    & -0.10      & -0.21      & 1.00       & -1.61     & 1.57          \\
+Number of Daily Orders               & 138,681    & 137,088    & 23,008     & 96,796    & 186,736       \\
+Number of Daily Trades               & 16,368     & 15,555     & 2,500      & 13,614    & 21,515        \\
+\% MPID & 1.96\% \\
+%$\Delta t$ & $1.58$ & $0.72$ & $2.26$ & $0.00$ & $28.67$ \\
+\textbf{CSCO} \\
+Average Stock Price (USD)            & 22.11       & 21.47       & 1.03       & 20.77      & 24.00        \\
+Intradaily Return Volatility (bp)    & 0.0022      & 0.0015      & 0.0028     & 0.0013     & 0.0121       \\
+Daily Return (bp)                    & -0.34       & 0.70        & 3.31       & -10.84     & 2.13         \\
+Number of Daily Orders               & 249,443     & 244,267     & 90,655     & 152,238    & 536,612      \\
+Number of Daily Trades               & 22,544      & 19,668      & 13,670     & 12,247     & 67,736       \\
+\% MPID & 2.14\% \\
+%$\Delta t$ & $1.40$ & $0.35$ & $2.11$ & $0.00$ & $22.34$ \\
+\textbf{EBAY} \\
+Average Stock Price (USD)            & 51.94      & 52.15      & 1.07       & 49.87      & 53.85        \\
+Daily Return (bp)                    & -0.15      & -0.30      & 1.68       & -3.34      & 4.31         \\
+Number of Daily Orders               & 310,645    & 286,657    & 113,001    & 164,888    & 597,135      \\
+Number of Daily Trades               & 20,620     & 17,564     & 7,797      & 13,560     & 40,018       \\
+\% MPID & 3.84\% \\
+%$\Delta t$ & $1.40$ & $0.54$ & $1.97$ & $0.00$ & $18.90$ \\
+\textbf{FB} \\
+Average Stock Price (USD)            & 47.89       & 47.89       & 1.13       & 45.73      & 50.45        \\
+Daily Return (bp)                    & -0.29       & 0.04        & 2.84       & -6.49      & 4.51         \\
+Number of Daily Orders               & 638,182     & 649,744     & 162,879    & 369,426    & 852,392      \\
+Number of Daily Trades               & 54,356      & 59,540      & 13,418     & 32,768     & 78,343       \\
+\% MPID & 6.80\% \\
+%$\Delta t$ & $0.29$ & $0.02$ & $0.72$ & $0.00$ & $17.54$ \\
+\textbf{GOOG} \\
+Average Stock Price (USD)            & 1025.43   & 1025.80   & 9.58      & 1005.00   & 1048.80      \\
+Daily Return (bp)                    & 0.05      & -0.15     & 0.88      & -1.48     & 2.05         \\
+Number of Daily Orders               & 75,042    & 76,744    & 19,323    & 49,241    & 114,180      \\
+Number of Daily Trades               & 5,187     & 4,710     & 1,395     & 3,531     & 7,935        \\
+\% MPID & 1.81\% \\
+%$\Delta t$ & $2.52$ & $0.44$ & $5.01$ & $0.00$ & $98.35$ \\
+\textbf{INTC} \\
+Average Stock Price (USD)            & 24.36       & 24.34      & 0.33       & 23.77      & 25.28        \\
+Daily Return (bp)                    & -0.11       & 0.29       & 1.88       & -5.35      & 2.69         \\
+Number of Daily Orders               & 190,832     & 172,346    & 49,940     & 138,646    & 326,237      \\
+Number of Daily Trades               & 14,174      & 12,548     & 5,644      & 9,398      & 31,298       \\
+\% MPID & 1.89\% \\
+%$\Delta t$ & $1.47$ & $0.30$ & $2.33$ & $0.00$ & $23.48$ \\
+\textbf{MSFT} \\
+Average Stock Price (USD)            & 37.34       & 37.45       & 0.55       & 35.55      & 38.22         \\
+Daily Return (bp)                    & 0.35        & 0.43        & 1.71       & -1.77      & 4.18          \\
+Number of Daily Orders               & 444,870     & 426,755     & 105,221    & 269,153    & 640,988       \\
+Number of Daily Trades               & 29,026      & 27,207      & 10,764     & 16,448     & 57,101        \\
+\% MPID & 1.61\% \\
+%$\Delta t$ & $0.84$ & $0.08$ & $1.60$ & $0.00$ & $21.85$ \\
+\textbf{YHOO} \\
+Average Stock Price (USD)            & 34.56      & 34.85      & 1.32       & 32.07      & 36.66        \\
+Daily Return (bp)                    & 0.75       & 0.52       & 1.94       & -2.40      & 3.15         \\
+Number of Daily Orders               & 378,733    & 358,077    & 124,213    & 208,150    & 552,838      \\
+Number of Daily Trades               & 21,726     & 22,149     & 5,121      & 15,623     & 34,732       \\
+\% MPID & 2.85\% \\
+\\ \hline
+%$\Delta t$ & $1.07$ & $0.06$ & $2.04$ & $0.00$ & $26.31$
+  \hline
+\end{tabular}}
+\end{center}
+\noindent \footnotesize This table shows the average stock price, daily return (using closing transaction prices), daily number of orders (i.e., submitted limit orders), and the number of daily trades (i.e., executed orders or submitted market orders), for eight Nasdaq-traded stocks for 4-22 November 2013. Reported are the mean, median, standard deviation, minimum, and maximum of these variables for each firm. Also reported for each firm are the percentages of order submissions that are attributed to an MPID.
+\end{table}
+
+\subsection{Market Maker Identifier Data}\label{subsec:MMID}
+
+As previously mentioned, LOBSTER Academic Data records data directly from the Nasdaq TotalView-ITCH direct data feed. When a market participant submits a limit order to Nasdaq, the information on a number of characteristics of the order, including the order reference number, limit price and size, will be recorded as a submission message. If the market participants has chosen to display their identity to other market participants, than the message will additionally contain their Market Participant Identification (MPID), which is uniquely assigned to each market participant registered on the exchange.
+
+\noindent Along with the firm name of the market participant and other identifying information, Nasdaq additionally provides information on the market participant type (i.e., Market Maker, Order Entry Firm, Electronic Crossing Network (ECN), general Nasdaq Market Participant, etc.).\footnote{For more information on MPID types, see \url{http://www.Nasdaqtrader.com/trader.aspx?id=symboldirdefs} and \url{ftp://ftp.Nasdaqtrader.com/symboldirectory/mpidlist.txt}.} This allows us to identify which market participants are registered as market makers. Table~\ref{tab:mpidnames} shows the list of the Nasdaq MPIDs that are revealed within our sample, along with the corresponding market participant type. Also reported in Column (4) is the relative contribution of each MPID to the total MPID-attributed submission volume. The table confirms that a vast majority (99.89\%) of MPID revelation is done by firms that identify as market makers. To remain consistent with our hypotheses on the behavior of market makers, those MPIDs which are not attributed to the market maker MPID type are removed.\footnote{Note that the MPID ``WEMM", formerly belonging to Wells Fargo, Inc., has since been de-listed as an MPID, and thus its MPID type cannot be verified. Therefore, this (relatively small) sample is also removed.}
+
+\begin{table}
+\caption{Market Participant Identifiers, Types and Relative Submission Contribution}\label{tab:mpidnames}
+\begin{center}
+\resizebox{0.6\textwidth}{!}{%
+\begin{tabular}{p{0.5in}>{\centering\arraybackslash}m{2.5in}>{\centering\arraybackslash}m{1.5in}>{\centering\arraybackslash}m{0.6in}}
+\hline \hline
+\textbf{(1)} & \textbf{(2)} & \textbf{(3)} & \textbf{(4)} \\
+\textbf{MPID} & \textbf{Firm Name} & \textbf{MPID Type} & \textbf{\%Sub.} \\ \hline \hline
+ &  &  &  \\
+ATDF & Automated Trading Desk Financial Services, LLC & Market Maker & 0.05\% \\
+BARD & Robert W. Baird \& Co. Incorporated & Market Maker & $<0.00\%$ \\
+DADA & D.A. Davidson \& Co. & Market Maker & 0.00\% \\
+FBCO & Credit Suisse Securities (USA) LLC & Market Maker & 0.28\% \\
+GSCO & Goldman, Sachs \& Co. & Market Maker & 1.55\% \\
+RHCO & Suntrust Robinson Humphrey, Inc. & Market Maker & $<0.00\%$ \\
+SBSH & Citigroup Global Markets Inc. & Market Maker & 17.21\% \\
+TMBR & Timber Hill LLC & Market Maker & 76.36\% \\
+UBSS & UBS Securities LLC & Market Maker & 4.44\% \\
+WCHV & Wells Fargo Securities, LLC. & Market Maker & $<0.00\%$ \\
+&&\textbf{Total Market Maker} &  \textbf{99.89\%} \\
+ &  &  &  \\
+BOOK & Bloomberg Tradebook LLC & ECN & 0.03\% \\
+LEHM & Barclays Capital Inc./Le & Nasdaq Participant & 0.01\% \\
+NITE & Knight Capital Americas LLC & Nasdaq Participant & 0.03\% \\
+WEMM & Wells Fargo Securities, LLC. & Nasdaq Participant & 0.04\% \\
+&&\textbf{Total Other} & \textbf{0.11\%} \\
+ &  &  &  \\
+\hline \hline
+\end{tabular}}
+\end{center}
+\begin{minipage}{\textwidth}
+\footnotesize
+This table shows the list of Nasdaq market participant identifiers (MPIDs) identified from a sample of eight Nasdaq-traded stocks for 4-22 November 2013. Reported are the MPIDs, the firm name of the market participant, the MPID type, and the percentage of total MPID-attributed submission volume contributed by that particular MPID. The market participants are split according to whether or not Nasdaq registers the market participant as a market maker or not; see \url{ftp://ftp.Nasdaqtrader.com/symboldirectory/mpidlist.txt}.
+\end{minipage}
+\end{table}
+
+\noindent Table~\ref{tab:mpidbyfirm} decomposes the contribution of each market participant to the submission volume of individual stocks. From the table, it becomes clear that only three market makers maintain a presence in all stocks: Citigroup Global Markets LLC (SBSH), Timber Hill LLC (TMBR), and UBS Securities LLC (UBSS). Also reported are the Herfindahl-Hirschman Index (HHI) scores for each stock, calculated as the sum of squares of the market shares (i.e., relative contribution to MPID-attributed submission volume) of each market making firm active within a stock. This measure should capture the degree of competition between liquidity providers in each stock, and ranges from a low of 3973 for GOOG (most competitive), to a high of 8943 for EBAY (least competitive).
+
+\begin{table}[!htbp]
+\caption{Relative Contribution of Market Participants to Submission Volume, By Stock}\label{tab:mpidbyfirm}
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\tiny
+\begin{tabular}{p{1in}>{\centering\arraybackslash}m{0.4in}>{\centering\arraybackslash}m{0.4in}>{\centering\arraybackslash}m{0.4in}>{\centering\arraybackslash}m{0.4in}>{\centering\arraybackslash}m{0.4in}>{\centering\arraybackslash}m{0.4in}>{\centering\arraybackslash}m{0.4in}>{\centering\arraybackslash}m{0.4in}}
+\hline \hline
+\\ \\
+%\multicolumn{9}{c}{(A) Relative Contribution of Market Participants to Submission Volume, By Stock} \\ \\
+& \textbf{(1)} & \textbf{(2)} & \textbf{(3)} & \textbf{(4)} & \textbf{(5)} & \textbf{(6)} & \textbf{(7)} & \textbf{(8)}  \\
+& \textbf{AAPL} & \textbf{CSCO} & \textbf{EBAY} & \textbf{FB} & \textbf{GOOG} & \textbf{INTC} & \textbf{MSFT} & \textbf{YHOO}     \\ \\
+\textbf{ATDF} & 0.21\% & 0.24\% & 0.02\% & 0.02\% & 0.16\% & 0.15\% & 0.07\% & 0.04\% \\
+\textbf{BARD} & $-$ & $-$ & $<0.01\%$ & $-$ & $-$ & $-$ & 0.01\% & $-$ \\
+\textbf{BOOK} & 0.03\% & 0.11\% & 0.09\% & $<0.01\%$ & 0.17\% & 0.15\% & 0.02\% & 0.01\% \\
+\textbf{DADA} & $-$ & 0.01\% & $-$ & $-$ & $-$ & $-$ & $-$ & $-$ \\
+\textbf{FBCO} & 0.35\% & 2.08\% & 0.05\% & 0.06\% & 0.10\% & 2.13\% & 0.08\% & 0.04\% \\
+\textbf{GSCO} & $-$ & 5.57\% & $-$ & $-$ & $-$ & 7.52\% & 10.81\% & $-$ \\
+\textbf{LEHM} & $-$ & $-$ & $-$ & $-$ & $-$ & 0.11\% & 0.05\% & $-$ \\
+\textbf{NITE} & 0.05\% & 0.07\% & $-$ & 0.02\% & 0.96\% & 0.03\% & 0.02\% & 0.01\% \\
+\textbf{RHCO} & $<0.01\%$ & $-$ & $-$ & $-$ & $-$ & $-$ & $-$ & $-$ \\
+\textbf{SBSH} & 3.72\% & 18.90\% & 4.65\% & 24.11\% & 51.56\% & 4.89\% & 0.87\% & 16.49\% \\
+\textbf{TMBR} & 68.08\% & 57.89\% & 94.45\% & 73.06\% & 33.73\% & 72.15\% & 84.95\% & 81.78\% \\
+\textbf{UBSS} & 27.23\% & 14.98\% & 0.73\% & 2.71\% & 13.26\% & 12.77\% & 3.09\% & 1.61\% \\
+\textbf{WCHV} & 0.01\% & $-$ & $-$ & $-$ & $-$ & $-$ & $-$ & $-$ \\
+\textbf{WEMM} & 0.32\% & 0.16\% & 0.01\% & 0.02\% & 0.06\% & 0.11\% & 0.03\% & 0.02\% \\ \\
+\textbf{Herfindahl-Hirschman Index} & 5390.47 & 3968.31 & 8942.97 & 5926.41 & 3972.96 & 5453.76 & 7343.68 & 6962.48
+\\ \\ \hline \hline \\ \\
+%\multicolumn{9}{c}{(B) Characteristics of Largest Market Participants, By Stock} \\ \\
+%& \textbf{(1)} & \textbf{(2)} & \textbf{(3)} & \textbf{(4)} & \textbf{(5)} & \textbf{(6)} & %\textbf{(7)} & \textbf{(8)}  \\
+%& \textbf{AAPL} & \textbf{CSCO} & \textbf{EBAY} & \textbf{FB} & \textbf{GOOG} & %\textbf{INTC} & \textbf{MSFT} & \textbf{YHOO}     \\ \\
+%\textbf{TMBR} &  &  &  &  &  &  &  &  \\
+%\multicolumn{1}{r}{\# Buy Submissions} & 11204 & 21762 & 80101 & 225690 & 3197 & 17866 & %42955 & 61442 \\
+%\multicolumn{1}{r}{\# Sell Submissions} & 14634 & 21235 & 77744 & 218361 & 3165 & 18220 & %42019 & 62024 \\
+%%\multicolumn{1}{r}{\# Cancellations} & 25209 & 43010 & 152957 & 431214 & 6234 & 36066 & %84855 & 119767 \\
+%\multicolumn{1}{r}{\# Executions} & 837 & 1107 & 2788 & 7750 & 178 & 1420 & 2276 & 2669 \\
+%\multicolumn{1}{r}{Time to Replace} & 82.2 & 3.42 & 2.05 & 2.24 & 104.75 & 5.67 & 2.67 & %2.21 \\
+%%\multicolumn{1}{r}{Daily Cash Flow} & 920.57 & 23.2 & 141.96 & 108.93 & -129.36 & -58.82 & %-23.95 & 258.51 \\
+%\multicolumn{1}{r}{Price Impact} & -0.002 & 0.245 & 0.271 & 0.138 & 0.04 & 0.363 & 0.101 & %0.31 \\
+%\multicolumn{1}{r}{Realized Spread} & 0.098 & -0.017 & -0.163 & -0.023 & 0.151 & -0.156 & %0.039 & -0.156 \\
+%\textbf{SBSH} &  &  &  &  &  &  &  &  \\
+%\multicolumn{1}{r}{\# Buy Submissions} & 1410 & 7101 & 3999 & 78798 & 7685 & 553 & 29 & %12095 \\
+%\multicolumn{1}{r}{\# Sell Submissions} & 0 & 6934 & 3768 & 67746 & 2039 & 1893 & 837 & %12799 \\
+%%\multicolumn{1}{r}{\# Cancellations} & 1800 & 13781 & 8122 & 148925 & 10321 & 2753 & 930 & %24960 \\
+%\multicolumn{1}{r}{\# Executions} & 0 & 3 & 0 & 7 & 0 & 12 & 11 & 0 \\
+%\multicolumn{1}{r}{Time to Replace} & - & 0.03 & - & 3.86 & - & 229.43 & 89.42 & - \\
+%%\multicolumn{1}{r}{Daily Cash Flow} & 0 & 0.51 & 0 & -3.87 & 0 & 0.85 & 2.01 & 0 \\
+%\multicolumn{1}{r}{Price Impact} & - & -0.562 & - & -1.917 & - & -1.655 & 0.325 & - \\
+%\multicolumn{1}{r}{Realized Spread} & - & 0.773 & - & 2.325 & - & 1.857 & -0.191 & - \\
+%\textbf{UBSS} &  &  &  &  &  &  &  &  \\
+%\multicolumn{1}{r}{\# Buy Submissions} & 5417 & 6401 & 888 & 8993 & 1323 & 3201 & 1712 & %1425 \\
+%\multicolumn{1}{r}{\# Sell Submissions} & 5012 & 5258 & 356 & 7595 & 1300 & 3725 & 1469 & 1040 \\
+%%\multicolumn{1}{r}{\# Cancellations} & 4815 & 10750 & 545 & 12539 & 1191 & 6164 & 1918 & 1425 \\
+%\multicolumn{1}{r}{\# Executions} & 17155 & 6475 & 2014 & 18830 & 3686 & 6417 & 3567 & 2902 %\\
+%\multicolumn{1}{r}{Time to Replace} & 127.23 & 97.33 & 1057.32 & 49.41 & 934.29 & 174.44 & 336.19 & 380.83 \\
+%\multicolumn{1}{r}{Daily Cash Flow} & 1414.87 & 598.92 & -390.62 & 3502.49 & 1943.46 & 492.49 & 134.57 & -174.47 \\
+%\multicolumn{1}{r}{Price Impact} & 0.102 & 0.152 & 0.274 & 0.106 & 0.146 & 0.284 & 0.067 & 0.205 \\
+%\multicolumn{1}{r}{Realized Spread} & -0.005 & 0.075 & -0.151 & 0.007 & 0.014 & -0.074 & 0.078 & -0.047 \\
+%\textbf{Anonymous} &  &  &  &  &  &  &  &  \\
+%\multicolumn{1}{r}{\# Buy Submissions} & 1042170 & 1715117 & 2136405 & 4170685 & 454033 & 1335875 & 3083341 & 2603254 \\
+%\multicolumn{1}{r}{\# Sell Submissions} & 861296 & 1702184 & 2045480 & 4155962 & 577558 & 1285194 & 3044702 & 2547997 \\
+%\multicolumn{1}{r}{\# Cancellations} & 1858586 & 3232379 & 3928692 & 7682321 & 974473 & 2505961 & 5897197 & 4943911 \\
+%\multicolumn{1}{r}{\# Executions} & 326738 & 366218 & 310517 & 803347 & 107234 & 223562 & 439814 & 319349 \\
+%\multicolumn{1}{r}{Time to Replace} & 0.46 & 0.04 & 0.07 & 0.03 & 1.68 & 0.05 & 0.03 & 0.05 \\
+%\multicolumn{1}{r}{Daily Cash Flow} & 20763 & 3624.51 & -6711.19 & 1463.74 & -8466.25 & 818.79 & 7544.46 & 1507.83 \\
+%\multicolumn{1}{r}{Price Impact} & 0.051 & 0.292 & 0.132 & 0.123 & 0.134 & 0.284 & 0.162 & 0.234 \\
+%\multicolumn{1}{r}{Realized Spread} & 0.004 & -0.071 & -0.03 & -0.029 & -0.01 & -0.085 & -0.031 & -0.099
+%\\ \\ \hline \hline
+\end{tabular}}
+\end{center}
+\begin{minipage}{\textwidth}
+\footnotesize
+This table shows the list of Nasdaq market participant identifiers (MPIDs) from a sample of eight Nasdaq-traded stocks for 4-22 November 2013. Reported are the MPIDs and their relative contribution (in percentage terms) to the total submission volume for each stock. Also reported are each stock's Herfindahl-Hirschman Index (HHI), to capture the each stock's level of competition between liquidity providers. %Panel B shows characteristics of the three largest market makers in the sample of market participants, including the number of buy and sell submissions, the number of submitted orders that are (partially) executed and (partially) cancelled, the time (in seconds) between the execution of a submitted order and the replacement of that order with a submission in the same direction, daily cash flow (calculated as daily sum of the volume of appropriately-signed executed orders), and price impact and realized spread associated with an MPID-attributed executed order from that market market. Aggregate results for anonymous orders are also reported.
+\end{minipage}
+\end{table}
+
+\subsection{Measure of MPID Submission Intensity}
+
+As a measure of MPID submission intensity, we consider the number of orders submitted that are attributed to an MPID, divided by the total number of orders. Specifically, the MPID submission ratio $MPID_t^i$ is calculated for each stock $i$ across the interval $[t-\tau,t]$, as:
+
+\begin{equation*}
+MPID_t^i=\frac{ \sum_{s=t-\tau}^{t} \mathbb{I}_s^{MPID.SUB,i} } {\sum_{s=t-\tau}^{t} \mathbb{I}_s^{SUB,i}},
+\end{equation*}
+
+\noindent where $\mathbb{I}_t^{SUB,i}$ is a dummy variable equal to one if the order book message at time $t$ describes the submission of a limit order, and $\mathbb{I}_t^{MPID.SUB,i}$ if the order book message at time $t$ shows the submission of a limit order with an attributed MPID. Likewise, measures of buy-side and sell-side MPID submission intensities ($MPID_t^{i,BUY}$ and $MPID_t^{i,SELL}$) are calculated, respectively, as the ratio of buy- (sell-)side MPID-attributed submissions to the total number of buy- (sell-)side submissions. Note that using the ratio of MPID-attributed order submissions to total order submissions, rather than the absolute number of MPID-attributed order submissions, allows us to control for general trading strategies and order flow trends and better isolate marginal drivers of MPID submission strategies. For example, limit order submissions in general tend to be high early in the trading day; observing a high absolute number of MPID orders during this time may therefore reflect a general trend in order submission strategies. However, observing a higher \emph{ratio} of MPID order submissions entails that there are additional incentives for traders to reveal their presence early in the trading day.
+
+Table~\ref{mpidsubstats} shows summary statistics for the MPID submission ratios $MPID_t^i$, $MPID_t^{i,BUY}$ and $MPID_t^{i,SELL}$, for the individual stocks in our sample, along with on an aggregate level. As expected, MPID submission ratios are variables ranging from 0 to 1; the aggregate mean MPID submission ratio reflects a mean order submission ratio of about 0.03. FB has the highest MPID order submission ratios, with a mean of about 0.07, while all other firms have average MPID order submission ratios that range from 0.01 to 0.05. GOOG has the highest standard deviation in its MPID submission ratios; as it is the least liquid firm in our sample. Furthermore, MPID submission ratios tend to be right-skewed, reflecting the presence of occasional very high values. This is especially true for GOOG, who sees maximum MPID submission ratios equal to 1.
+
+In terms of the time series properties of our measures, Column 7 of Table~\ref{mpidsubstats} shows that results from the KPSS tests for stationarity overwhelming reject the null of stationarity, in favor of the unit-root alternative. Autocorrellograms for $MPID_t^i$ for each firm are presented in Figure~ref{ratiostats}, and show high persistence in MPID submission ratios, as autocorrelation remains highly significant even after 20 lags.
+
+-autocorrelation
+-min, max, skewness
+-average across trading day
+
+\begin{table}[htp!]
+\caption{Title}\label{mpidsubstats}
+\begin{center}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccccccccccc} \hline \hline \\
+& (1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9) & (10) & (11)\\ \\
+\multicolumn{12}{l}{(A.1) All MPID Submissions}             \\ \\
+                                                      & Mean  & Median & Std. Dev. & Min.  & Max.  & Skew  & Lags & ADF   & PP    & KPSS1 & KPSS2   \\
+AAPL                                                  & 0.014 & 0.000  & 0.029     & 0.000 & 0.325 & 3.148 & 29   & 0.001 & 0.001 & 0.01  & 0.01    \\
+CSCO                                                  & 0.013 & 0.011  & 0.013     & 0.000 & 0.261 & 2.540 & 17   & 0.001 & 0.001 & 0.01  & 0.01    \\
+EBAY                                                  & 0.040 & 0.037  & 0.028     & 0.000 & 0.319 & 2.048 & 10   & 0.001 & 0.001 & 0.01  & 0.01    \\
+FB                                                    & 0.051 & 0.051  & 0.020     & 0.000 & 0.174 & 0.213 & 17   & 0.005 & 0.001 & 0.01  & 0.01    \\
+GOOG                                                  & 0.007 & 0.000  & 0.027     & 0.000 & 1.000 & 9.856 & 38   & 0.001 & 0.001 & 0.01  & 0.01    \\
+INTC                                                  & 0.013 & 0.011  & 0.014     & 0.000 & 0.214 & 2.202 & 21   & 0.001 & 0.001 & 0.01  & 0.01    \\
+MSFT                                                  & 0.013 & 0.012  & 0.010     & 0.000 & 0.118 & 2.023 & 12   & 0.001 & 0.001 & 0.01  & 0.01    \\
+YHOO                                                  & 0.025 & 0.021  & 0.020     & 0.000 & 0.368 & 3.030 & 19   & 0.001 & 0.001 & 0.01  & 0.01    \\ \\
+\multicolumn{12}{l}{(A.2) Buy-Side MPID Submissions}      \\ \\
+                                                      & Mean  & Median & Std. Dev. & Min.  & Max.  & Skew  & Lags & ADF   & PP    & KPSS1 & KPSS2   \\
+AAPL                                                  & 0.011 & 0.000  & 0.034     & 0.000 & 0.500 & 4.708 & 9    & 0.001 & 0.001 & 0.01  & 0.01    \\
+CSCO                                                  & 0.014 & 0.009  & 0.019     & 0.000 & 0.273 & 3.081 & 8    & 0.001 & 0.001 & 0.01  & 0.01    \\
+EBAY                                                  & 0.043 & 0.038  & 0.036     & 0.000 & 0.563 & 2.360 & 27   & 0.001 & 0.001 & 0.01  & 0.01    \\
+FB                                                    & 0.053 & 0.051  & 0.026     & 0.000 & 0.375 & 0.936 & 18   & 0.001 & 0.001 & 0.01  & 0.01    \\
+GOOG                                                  & 0.006 & 0.000  & 0.035     & 0.000 & 1.000 & 8.954 & 16   & 0.001 & 0.001 & 0.056 & 0.043   \\
+INTC                                                  & 0.014 & 0.007  & 0.020     & 0.000 & 0.211 & 2.665 & 22   & 0.001 & 0.001 & 0.097 & 0.01    \\
+MSFT                                                  & 0.014 & 0.012  & 0.014     & 0.000 & 0.200 & 2.753 & 20   & 0.001 & 0.001 & 0.01  & 0.01    \\
+YHOO                                                  & 0.026 & 0.021  & 0.027     & 0.000 & 0.556 & 3.490 & 19   & 0.001 & 0.001 & 0.01  & 0.01    \\ \\
+\multicolumn{12}{l}{(A.3) Sell-Side MPID Submissions} \\ \\
+                                                      & Mean  & Median & Std. Dev. & Min.  & Max.  & Skew  & Lags & ADF   & PP    & KPSS1 & KPSS2   \\
+AAPL                                                  & 0.018 & 0.000  & 0.048     & 0.000 & 0.481 & 3.632 & 29   & 0.001 & 0.001 & 0.01  & $<0.01$ \\
+CSCO                                                  & 0.014 & 0.008  & 0.019     & 0.000 & 0.250 & 2.849 & 22   & 0.001 & 0.001 & 0.1   & $<0.01$ \\
+EBAY                                                  & 0.042 & 0.037  & 0.034     & 0.000 & 0.435 & 1.996 & 12   & 0.001 & 0.001 & 0.01  & $<0.01$ \\
+FB                                                    & 0.052 & 0.051  & 0.025     & 0.000 & 0.364 & 0.816 & 19   & 0.001 & 0.001 & 0.01  & $<0.01$ \\
+GOOG                                                  & 0.007 & 0.000  & 0.034     & 0.000 & 0.692 & 7.889 & 38   & 0.001 & 0.001 & 0.012 & $<0.01$ \\
+INTC                                                  & 0.015 & 0.008  & 0.022     & 0.000 & 0.394 & 3.243 & 23   & 0.001 & 0.001 & 0.01  & $<0.01$ \\
+MSFT                                                  & 0.014 & 0.012  & 0.014     & 0.000 & 0.200 & 2.602 & 12   & 0.001 & 0.001 & 0.01  & $<0.01$ \\
+YHOO                                                  & 0.026 & 0.021  & 0.026     & 0.000 & 0.313 & 2.877 & 10   & 0.001 & 0.001 & 0.01  & $<0.01$ \\ \\
+\multicolumn{12}{l}{(A.4) All Firms}                   \\ \\
+                                                      & Mean  & Median & Std. Dev. & Min.  & Max.  & Skew  & Lags & ADF   & PP    & KPSS1 & KPSS2   \\
+All MPID Submissions                                  & 0.022 & 0.015  & 0.026     & 0.000 & 1.000 & 2.856 & 45   & 0.001 & 0.001 & 0.01  & 0.01    \\
+Buy-Side MPID Submissions                             & 0.023 & 0.012  & 0.032     & 0.000 & 1.000 & 3.469 & 47   & 0.001 & 0.001 & 0.01  & 0.01    \\
+Sell-Side MPID Submissions                            & 0.023 & 0.013  & 0.033     & 0.000 & 0.692 & 3.290 & 45   & 0.001 & 0.001 & 0.01  & 0.01  \\
+\\
+\hline \hline
+\end{tabular}}
+\end{center}
+\begin{minipage}{\textwidth}
+\footnotesize
+Caption
+\end{minipage}
+\end{table}
+
+\begin{figure}[htp!]
+\caption{Autocollerograms for MPID Submission Ratios} \label{ratiostats}
+\begin{subfigure}{0.24\textwidth}
+\includegraphics[width=\linewidth]{docs/Graphs_MPID_SUB_RATIO_AAPL_30sec_FullTime.pdf}
+%\caption{\tiny Caption} \label{fig:fig1a}
+\end{subfigure}
+\hspace*{\fill}
+\begin{subfigure}{0.24\textwidth}
+\includegraphics[width=\linewidth]{docs/Graphs_MPID_SUB_RATIO_CSCO_30sec_FullTime.pdf}
+%\caption{\tiny Caption} \label{fig:fig1b}
+\end{subfigure}
+\begin{subfigure}{0.24\textwidth}
+\includegraphics[width=\linewidth]{docs/Graphs_MPID_SUB_RATIO_EBAY_30sec_FullTime.pdf}
+%\caption{\tiny Caption} \label{fig:fig1c}
+\end{subfigure}
+\begin{subfigure}{0.24\textwidth}
+\includegraphics[width=\linewidth]{docs/Graphs_MPID_SUB_RATIO_FB_30sec_FullTime.pdf}
+%\caption{\tiny Caption} \label{fig:fig1g}
+\end{subfigure}
+
+\begin{subfigure}{0.24\textwidth}
+\includegraphics[width=\linewidth]{docs/Graphs_MPID_SUB_RATIO_GOOG_30sec_FullTime.pdf}
+%\caption{\tiny Caption} \label{fig:fig1a}
+\end{subfigure}
+\hspace*{\fill}
+\begin{subfigure}{0.24\textwidth}
+\includegraphics[width=\linewidth]{docs/Graphs_MPID_SUB_RATIO_INTC_30sec_FullTime.pdf}
+%\caption{\tiny Caption} \label{fig:fig1b}
+\end{subfigure}
+\begin{subfigure}{0.24\textwidth}
+\includegraphics[width=\linewidth]{docs/Graphs_MPID_SUB_RATIO_MSFT_30sec_FullTime.pdf}
+%\caption{\tiny Caption} \label{fig:fig1c}
+\end{subfigure}
+\begin{subfigure}{0.24\textwidth}
+\includegraphics[width=\linewidth]{docs/Graphs_MPID_SUB_RATIO_YHOO_30sec_FullTime.pdf}
+%\caption{\tiny Caption} \label{fig:fig1g}
+\end{subfigure}
+\begin{minipage}{\textwidth}
+\footnotesize
+Caption
+\end{minipage}
+\end{figure}
+
+\begin{figure}[htp!]
+\caption{Average Daily MPID Submission Ratios, by Firm} \label{ratiostats}
+\begin{center}
+\begin{subfigure}{0.45\textwidth}
+\includegraphics[width=\linewidth]{docs/MPIDSubmission_Daily_ByFirm_30sec_FullTime.pdf}
+\end{subfigure}
+\begin{subfigure}{0.45\textwidth}
+\includegraphics[width=\linewidth]{docs/MPIDSubmission_Daily_ByType_30sec_FullTime.pdf}
+\end{subfigure}
+\end{center}
+\begin{minipage}{\textwidth}
+\footnotesize
+Caption
+\end{minipage}
+\end{figure}
+
+\section{Drivers of MPID Order Submissions}
+
+\subsection{Methodology}
+
+[Introduction]
+
+In this estimation, we perform a panel regression of MPID-attributed submission intensity on various market conditions hypothesized to influence the decision to submit orders non-anonymously. Specifically, we estimate:
+
+\begin{equation}
+MPID_t^i=\alpha_0^i + \sum_{p=1}^5 \alpha_p MPID_{t-p}^i +\alpha_6 OPEN_t + \beta' \textbf{x}_t^i + \gamma' \textbf{z}_t^i + \delta' DAY_t +\varepsilon_{t}^i \label{prepanel}
+\end{equation}
+
+\noindent where $MPID_t^i$ is a variable intended to capture the intensity of MPID-attributed submissions over the interval $[t,t+1]$ (as described in the previous Section []), $\textbf{x}_t^i$ is a vector containing the average order characteristics of MPID-attributed orders submitted over the interval $[t,t+1]$, such as average order size, and $\textbf{z}_t^i$ is a vector containing various market conditions averaged over the interval $[t-1,t]$ that are hypothesized to influence the decision to submit MPID-attributed orders, such as volatility and the bid-ask spread. To account for the high autocorrelation of MPID submission , $p=5$ lags of the dependent variable, $MPID_{t-1}^i$, are included as additional regressors.\footnote{\textcolor{red}{[Something about ADF and Durbin-Watson statistics. Something about dynamic panel model.]}} $OPEN_t$ is a dummy variable equal to one if the interval $[t,t+1]$ is within the first thirty minutes of the trading day, and $DAY_t$ is a vector of dummy variables controlling for daily fixed effects. Firm fixed affects are captured by $\alpha_0^i$; results are presented for specifications both including and excluding daily and firm fixed effects. Furthermore, \textcolor{red}{[something about both buy and sell side]}
+
+\textcolor{red}{[Something about estimation?]}
+
+The vector of order characteristics, $\textbf{x}_t^i$, contains two variables: the average aggressiveness of MPID-attributed orders over the interval $[t,t+1]$, $AGGR.MPID_t^i$ defined as the signed distance of a submitted order to the midquote, and the average order size (in dollar volume) of MPID-attributed submissions over the interval $[t,t+1]$, $ORSZ.MPID_t^i$. These variables are included to control for the potential that a higher intensity of MPID orders may be driven by, e.g., order-splitting strategies or by ``hiding" attributed orders deep in the book.
+
+The vector $\textbf{z}_t^i$, contains ten variables meant to capture market conditions that are hypothesized to influence market makers' decision to submit MPID-attributed orders: relative quoted bid-ask spreads ($RELSPR_t^i$), volatility ($VOL_t^i$), average order size ($ORSZ.TOTAL_t^i$), average price aggressiveness ($AGGR.TOTAL_t^i$), submission dollar volume ($SUB_t^i$), execution dollar volume ($EXE_t^i$), and depth ($DEPTH_t^i$). These variables are all averaged across the interval $[t-1,t]$. Also included are (unsigned) relative changes in the midquote over the interval $[t-1,t]$ ($RELDPR_t^i$), a dummy variable equal to one is this relative price change is negative ($NEG.DUMMY_{t}^i$), and the interaction between these variables to capture the effects of large, negative changes in prices ($RELDPR_t^i \times NEG.DUMMY_{t}^i$). \textcolor{red}{[relate back to the hypothesis]}
+
+Descriptive statistics of the order and market characteristics are presented in Table [].
+
+Describe robustness
+
+\subsection{Empirical Results}
+
+This section presents...
+
+Table [] shows results from the panel regression estimation in (\ref{prepanel}). Panels 1-3 show results in which the dependent variable is defined as the total MPID submission intensity, $MPID_t^i$. Panel 1 shows results from an OLS pooling panel regression, excluding firm and time fixed effects. Panel 2 includes firm fixed effects, while Panel 3 additionally includes day dummies $DAY_t^i$ capturing daily time fixed effects. Panel 4 replaces the dummy variable capturing negative prices changes, $NEG.DUMMY_t^i$, with a dummy variable capturing positive price changes, $POS.DUMMY_t^i$, to check if market makers respond differently to large, downward vs. upward price movements. Lastly, in order to see if buy- and sell-side MPID submission vary in terms of their reactions to different sides of the book, the panel regression in (\ref{prepanel}) is further specified to consider the buy- and sell-sides of the book separately. Panels 5-6 show results from specifications in which the dependent variable is defined as, respectively, buy-side MPID submission intensity, $MPID.BUY_t^i$, and sell-side MPID submission intensity, $MPID.SELL_t^i$, including firm and daily time fixed effects. Buy- and sell-side submission volumes are subsequently regressed on same-side submission and executions volumes and depth.
+
+The results broadly support Hypothesis 1, in that market makers indeed submit MPID-attributed orders in order to provide liquidity. However, the results are more consistent with the idea that market makers submit MPID-attributed orders according to the ``reliable counterparties" hypothesis, rather than to stabilize pricing errors according to the ``contrarian trader" hypothesis.
+
+First, the results show that market makers tend to intervene using MPID-attributed orders following periods of high volatility and high relative bid-ask spreads. Positive and significant coefficients (at least at a $\alpha=10\%$ significance level) on lagged volatility, $VOL_{t-1}^i$ reflect that MPID submission ratios tend to be higher following intervals of high volatility: a one-standard-deviation increase in volatility leads to a marginal increase in MPID submissions in the next period of about one basis point (a relative increase of about 3-4\%). \footnote{Note from table []...} Likewise, coefficients on lagged relative quote bid-ask spreads, $RELSPR_{t-1}^i$, are also positive and significant ($\alpha=10\%$) for most specifications, reflecting a $3-4\%$ (relative) marginal increase in MPID submission ratios following periods of high bid-ask spreads. However, significance is lost once the sell side of the book is considered. Particularly in terms of magnitude, one of the most important drivers of MPID submission ratios seems to be time-of-day effects. The coefficient on the open dummy, $OPEN_t^i$, reflects that MPID order submission ratios tend to be ceteris paribus $17-25\%$ higher during the first thirty minutes of the trading day. Since limit order books start out the day empty, this perhaps shows that market makers are motivated to
+
+Furthermore, the results show that market makers tend to intervene using MPID-attributed orders following periods of low submission volume. The negative and significant coefficient on submission volume across all specifications ($\alpha=1\%$) shows that MPID submission ratios tend to be higher following periods of low submission volume, on both sides of the book. In terms of magnitude, a one-standard-deviation decrease in submission volume is followed by up to a $6\%$ relative increase in the MPID submission ratio. Coefficients on execution volume lose significance with the addition of daily time fixed effects, but show some evidence that MPID submission ratios tend to be higher following periods of high execution volume.
+
+However, note that the coefficient on relative price changes $RELDPR_{t-1}^i$ is negative and significant across all specifications. Taken along with the results for volatility, the implication is the market makers respond with MPID-attributed orders following intervals of high variations in price, but actually \emph{reduce} their MPID exposure when prices are moving in a consistent direction. This is the case for both buy-side and sell-side MPID-attributed submissions, showing that market makers do not necessarily take on the role of ``contrarian" traders, at least with their MPID-attributed limit orders. Furthermore, from the negative coefficient on $AGGR.MPID_t^i$, a higher MPID-attributed ratio is associated with a lower level of price aggressiveness, showing that market makers are not necessarily interested in the executions of their orders, e.g., to mean-revert pricing errors. Interestingly, positive coefficients on MPID-attributed order size, $ORSZ.MPID_t^i$, show that a higher MPID-attributed ratio is associated with larger orders in terms of volume, which rules out that market makers follow order splitting strategies in submitting MPID-attributed orders.
+
+%\subsubsection{Robustness: Stock-Level Regressions}
+
+In order to see if our results are robust at the individual stock level, Figure~\ref{indreg1} plots the coefficients of MPID submission ratios regressed on the principal market condition variables of interest, for individual stock-level regressions. In other words, instead of the panel regression in (), time-series regression are separately run for each individual stock $i$. These regressions include the same explanatory and control variables as previously described. The regressions are similarly specified to include daily dummies, $DAY_t^i$, and for simplicity only the results from regressions defining the dependent variables as total MPID submission ratios are presented.
+
+Results largely confirm the main results from the panel regressions in Section []. Coefficients on volatility are positive across all stocks (although only significant for half of the stocks), while positive and significant coefficients on relative bid-ask spreads for the majority of stocks confirm that MPID submission ratios tend to be higher following intervals of high bid-ask spreads. Likewise, the stock-level regressions confirms that MPID submission ratios are higher following periods of low submission volumes, as the coefficient on $SUB_t$ is negative and significant for the majority of stocks. Coefficients on execution volume are somewhat more mixed, are significantly positive for half of the stocks, perhaps reflecting the lack of significance found in the panel.
+
+Lastly, ...
+
+Another robustness check considers that different market makers may have different strategies in terms of MPID attribution. Recall from Table~\ref{tab:mpidnames} that Timber Hill, LLC (MPID: TMBR) accounts for 76.36\% of total MPID submission volume across stocks. This leaves us with a sufficient sample of MPID-attributed orders, in order to consider Timber Hill, LLC's subsequent strategy in placing TMBR-attributed orders. Therefore, to decrease the potential noise created by aggregating all market makers into one analysis, the panel regression in () is run, in which the dependent variable is redefined to include only order submissions by Timber Hill, LLC, $TMBR_t^i$. The dependent variable $TMBR_t^i$ thus represents the ratio of the total number of MPID-attributed orders submitted by Timber Hill, to the total number of submitted orders, over the interval $[t,t+1]$.
+
+Results from this panel regression are presented in Table [].
+
+
+
+%\subsubsection{Robustness: Individual Market Maker}
+
+Overall, the findings that MPID-attributed order submissions are higher following intervals of high volatility, high relative bid-ask spreads, low submission volumes, and low depth are rather robust across various specifications, and support the hypothesis that market makers submit MPID-attributed orders within their capacity to provide liquidity. However, the lack of evidence that MPID-attributed orders respond to pricing errors, price changes, and the finding that they tend to be less aggressive, point to the idea that these markets makers are following a role of ``bridging the gap" between buyers and sellers, rather than working to correct pricing errors. In the next section, we explore ...
+
+\subsection{Impact of MPID Order Submissions}
+
+
+\begin{equation}
+q_t^{i}=\alpha_0 + \sum_{p=1}^5 \alpha_p q_{t-p}^i + \alpha_6 MPID_{t-1}^i + \alpha_7 SUB_{t-1}^i + \alpha_8 OPEN_t +\beta'\textbf{x}_{t-1}^i+\gamma'\textbf{z}_{t-1}^i+\mu'D_t+\varepsilon_{it}, \label{panel1}
+\end{equation}
+
+\noindent where $q_t^{i}$ represents a measure of ex post market quality measured over the interval $[t+1,t]$, such as relative bid-ask spreads or volatility, $\textbf{x}_{t-1}^i$ is a vector controlling for the average order characteristics of MPID-attributed orders submitted over the interval $[t-1,t]$, and $\textbf{z}_{t-1}^i$ is a vector controlling for various market conditions averaged over the interval $[t-1,t]$. Since these measure of market quality tend to also exhibit high degrees of autocorrelation, the regression in (\ref{panel1}) also includes $p=5$ dependent variable lags.\footnote{Durbin-Watson tests statistics confirm a failure to reject a null hypothesis of no autocorrelation in the error terms (tested on a stock-by-stock basis) in the majority of specifications for $q_t^i$, for the majority of firms. Durbin-Watson statistics close to 2 are considered generally to confirm no autocorrelation in the errors \citep[see, e.g.,][]{gujarati2004basic}; the average Durbin-Watson test statistic across specifications and stocks in our case is 1.98.} The key coefficient of interest is the coefficient on lagged MPID order submission intensity, $\alpha_6$, which should give the effect on market quality of an increase in MPID submission intensity. Note that (\ref{panel1}) also controls for changes in the denominator of $MPID_t^i$, i.e., the total submission intensity $SUB.NUM_t^i$.
+
+In a first step, the regression in (\ref{panel1}) is run using the standard OLS, including firm fixed effects. In this procedure, we implicity assume no endogeneity between MPID submission intensities and market characteristics. Given the results in [], this is a rather naive assumption, but the results are presented here as Wu-Hausman tests for endogeneity (in which the null) show that OLS is more consistent than 2SLS for at least one of our model specifications (see below).
+
+In a second step, to account for the endogeneity between MPID submission intensities and market characteristics, we instrument the submission intensity of MPID-attributed orders $MPID_t^{i}$ using the average submission intensities in the other stocks in our sample, $MPID_t^{-i}$. Note that this also requires instrumenting the denominator of $MPID_t^{i}$, $SUB.NUM_t^{i}$ with the average submission intensity of all other stocks, $SUB.NUM_t^{-i}$. The idea is that, while MPID-attributed orders submissions in other stocks are likely not driven by the market characteristics in the individual stock, MPID-attributed order submissions are correlated across stocks due to, e.g., trading capacities or constraints of each market makers.
+
+Table~\ref{pearson} shows the Pearson correlation coefficient between the MPID submission ratios in each stock with that of the MPID submission ratios in the other sample stocks, as well as the correlation between each stocks' total submission intensities with the total submission intensities in all other stocks. The table shows a relatively high level of correlation between $SUB.NUM_t^{-i}$ and $SUB.NUM_t^{i}$, with correlation coefficients ranging from 0.19-0.55. Correlation coefficients between $MPID_t^{i}$ and $MPID_t^{-i}$ are also relatively high for six of the stocks, ranging from 0.13-0.447. However, there is nearly zero correlation for AAPL; FB also exhibits low correlation, particularly on the sell side of the book. Therefore, it is possible that $MPID_t^{-i}$ will serve as a weak instrument from these stocks.
+
+In order to check this, explicit tests for instrument weakness, as well as tests for the endogeneity of $MPID_t^{i}$ and $SUB.NUM_t^{i}$, are conducted by running two-stage least squares (2SLS) regressions on a firm-by-firm basis. In the first stage, $MPID_t^{i}$ and $SUB.NUM_t^{i}$ are regressed on the instruments $MPID_t^{-i}$ and $SUB.NUM_t^{-i}$, along with the control variables, in order to obtain fitted values $\hat{MPID}_t^{i}$ and $\hat{SUB.NUM}_t^{i}$. In the second stage, $\hat{MPID}_t^{i}$ and $\hat{SUB.NUM}_t^{i}$ are used to substitute for $MPID_t^{i}$ and $SUB.NUM_t^{i}$ in the regression in (\ref{panel1}), estimated on a firm-by-firm basis. A test for weakness of the instruments conducts an $F$-test on the first stage-regressions under the null hypothesis that the instruments is not significant for the first-stage regression. To test for endogeneity of $MPID_t^{i}$ and $SUB.NUM_t^{i}$, a Wu-Hausman test is conducted under the null hypothesis that OLS and 2SLS are equally consistent.
+
+Results for the $F$-tests and Wu-Hausman tests for each stock are presented in Table [], substituting our main market quality measures of interest for $q_t^{i}$ for the dependent variable in regression (\ref{panel1}): relative bid-ask spreads ($RELSPR_t^i$), volatility ($VOL_t^i$), submission volume ($SUB.DVOL_t^i$), execution volume ($EXE.DVOL_t^i$), and depth ($DEPTH_t^i$). These results confirm the weakness of $MPID_t^{-i}$ as an instrument for AAPL: the $F$-test fails to reject that $MPID_t^{-i}$ does not enter the first-stage regression at a $\alpha=10\%$ level for two regressions (relative bid-ask spreads and submission volumes), at a $\alpha=1\%$ for all regressions. Therefore, the proceeding panel regression in which instrumental variable estimation is implemented excludes AAPL from the panel. Interestingly, Panel (E) shows that the Wu-Hausman test fails to reject ($\alpha=5\%$) that OLS is more consistent for 4 out of the eight firms, when depth ($DEPTH_t^i$) enters as the dependent variable in (\ref{panel1}). This confirms our presentation of the OLS results, in addition to the 2SLS results.
+
+\subsection{Empirical Results}
+
+Column 1 shows results from an OLS panel regression, including firm and day fixed effects, while Columns 2-5 reflect results using 2SLS estimation. Column 2 excludes Column 6 shows results where the regressor of interest, $MPID_t^i$, is defined as the total number of MPID submissions, as opposed to the ratio of MPID submissions.
+
+First, Tables 5 and 6 do not consistently show that uncertainty decreases following MPID-attributed submissions.
+
+Other results are as expected: relative bid-ask spreads for the most part are shown to increase when submission volumes are low, reflecting..., and increase when executions are high, reflecting market orders ``eating up" limit orders at the best bid and ask, leading to a ceteris paribus increase in spreads. Also, relative bid-ask spreads are shown to increase following large, negative price movements.
+
+Interestingly, relative bid-ask spreads are shown to increase following periods of low volatility.
+
+However, interestingly, relative bid
+
+
+
+Volatility is somewhat more responsible to the characteristics of MPID-attributed orders, rather than the rate at which they are submitted. Specifically, volatility tends to increase following more aggressive
+
+
+
+
+
+
+
+
+
+\begin{figure}[htp!]
+\caption{Coefficients from Firm-Level Post Regressions} \label{indreg1}
+
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_1_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1a}
+\end{subfigure}
+\hspace*{\fill}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_6_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1b}
+\end{subfigure}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_11_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1c}
+\end{subfigure}
+
+
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_12_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1g}
+\end{subfigure}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_13_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1h}
+\end{subfigure}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_16_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1h}
+\end{subfigure}
+%\begin{subfigure}{0.31\textwidth}
+%\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_1_abs(RELDPR_MID)xNEG_DUMMY.pdf}
+%\caption{\tiny Caption} \label{fig:fig1h}
+%\end{subfigure}
+
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_17_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1g}
+\end{subfigure}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_18_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1h}
+\end{subfigure}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_21_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1h}
+\end{subfigure}
+
+\begin{minipage}{\textwidth}
+\footnotesize
+The bar graphs in the figure above correspond to key coefficients from a regression of measures capturing various dimensions of market quality, on a dummy variable equal to one if a submitted order is attributed to an MPID, and zero otherwise. The dependent variables are calculated during the interval $[t, t+\Delta t]$, where $\Delta t$ is the time it takes to observe $N=20$ consecutive submissions, proceeding the submitted order. Results are presented separately for buy- and sell-side MPID-attributed orders, and separately for each firm in the sample, ordered according to the stock's mean stock price during the sample time period, 4-22 November, from highest to lowest. $t$-statistics are presented in parenthesis above the bar. Dark blue and red bars correspond to coefficients that are significant at a significance level of $\alpha=5\%$. Light blue and red bars correspond to coefficients that are insignificant at this level.
+\end{minipage}
+\end{figure}
+
+\begin{figure}[htp!]
+\caption{Coefficients from Firm-Level Post Regressions: TMBR} \label{indreg1}
+
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/TMBR_Regression_Ratio_30sec_1_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1a}
+\end{subfigure}
+\hspace*{\fill}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/TMBR_Regression_Ratio_30sec_6_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1b}
+\end{subfigure}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/TMBR_Regression_Ratio_30sec_11_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1c}
+\end{subfigure}
+
+
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/TMBR_Regression_Ratio_30sec_12_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1g}
+\end{subfigure}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/TMBR_Regression_Ratio_30sec_13_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1h}
+\end{subfigure}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/TMBR_Regression_Ratio_30sec_16_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1h}
+\end{subfigure}
+%\begin{subfigure}{0.31\textwidth}
+%\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_1_abs(RELDPR_MID)xNEG_DUMMY.pdf}
+%\caption{\tiny Caption} \label{fig:fig1h}
+%\end{subfigure}
+
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/TMBR_Regression_Ratio_30sec_17_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1g}
+\end{subfigure}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/TMBR_Regression_Ratio_30sec_18_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1h}
+\end{subfigure}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/TMBR_Regression_Ratio_30sec_21_MPID_SUB_1MPIDLags_5DepVarLags.pdf}
+\caption{\tiny Caption} \label{fig:fig1h}
+\end{subfigure}
+
+\begin{minipage}{\textwidth}
+\footnotesize
+The bar graphs in the figure above correspond to key coefficients from a regression of measures capturing various dimensions of market quality, on a dummy variable equal to one if a submitted order is attributed to an MPID, and zero otherwise. The dependent variables are calculated during the interval $[t, t+\Delta t]$, where $\Delta t$ is the time it takes to observe $N=20$ consecutive submissions, proceeding the submitted order. Results are presented separately for buy- and sell-side MPID-attributed orders, and separately for each firm in the sample, ordered according to the stock's mean stock price during the sample time period, 4-22 November, from highest to lowest. $t$-statistics are presented in parenthesis above the bar. Dark blue and red bars correspond to coefficients that are significant at a significance level of $\alpha=5\%$. Light blue and red bars correspond to coefficients that are insignificant at this level.
+\end{minipage}
+\end{figure}
+
+
+
+
+
+
+
+
+
+%To estimate the instrumental panel regression, the \citet{balestra1987} generalized two-stage least squares (G2SLS) estimator is implemented in order to to estimate the instrumental variable panel %regression with fixed effects. This procedure begins with a structural equation of the following form:
+
+%\begin{equation*}
+%y_{t}^i=\alpha^i+\beta'\mathbf{x}_{t}^i+\varepsilon_{t}^i,
+%\end{equation*}
+
+%\noindent where $\mathbf{x}_{t}^i=[\mathbf{u}_{t}^i,\mathbf{v}_{t}^i]$, and $\mathbf{v}_{t}^i$ is the set of endogenous variables. As is standard in fixed effects, these variables are transformed by %subtracting the sample mean, as: $\bar{y}_{t}^i=y_t^i-\frac{1}{T}\sum_{t=1}^Ty_t^i$, $\bar{x}_{t}^i=x_t^i-\frac{1}{T}\sum_{t=1}^Tx_t^i$, and %$\bar{\varepsilon}_{t}^i=\varepsilon_t^i-\frac{1}{T}\sum_{t=1}^T\varepsilon_t^i$.
+
+%\noindent The \citet{balestra1987} begins by premultiply
+
+
+
+
+
+
+
+Given a set of instruments
+
+As in standard
+
+
+
+
+
+
+
+
+\begin{table}[]
+\centering
+\caption{Instrumental Variables: Pearson Correlation Coefficients}
+\label{pearson}
+\begin{tabular}{lllllllll} \hline \\
+ & AAPL                & CSCO  & EBAY  & FB    & GOOG  & INTC  & MSFT  & YHOO       \\ \hline \\
+MPID Submissions (All)     & 0.018 & 0.206 & 0.447 & 0.113 & 0.211 & 0.229 & 0.392 & 0.421 \\
+MPID Submissions (Buy)  & 0.053 & 0.125 & 0.366 & 0.158 & 0.154 & 0.139 & 0.291 & 0.356 \\
+MPID Submissions (Sell) & 0.006 & 0.167 & 0.313 & 0.073 & 0.145 & 0.180 & 0.280 & 0.288 \\
+Total Submissions (All)        & 0.446 & 0.367 & 0.399 & 0.437 & 0.296 & 0.423 & 0.546 & 0.456 \\
+Total Submissions (Buy)         & 0.325 & 0.389 & 0.268 & 0.357 & 0.193 & 0.375 & 0.460 & 0.301 \\
+Total Submissions (Sell)        & 0.434 & 0.335 & 0.377 & 0.421 & 0.266 & 0.384 & 0.509 & 0.450 \\ \\ \hline
+\end{tabular}
+\resizebox{0.9\linewidth}{!}{%
+\begin{tabular}{lllllllll}
+(A) RELSPR &           &            &            &            &           &            &            &            \\
+ & AAPL                & CSCO  & EBAY  & FB    & GOOG  & INTC  & MSFT  & YHOO       \\
+L1.MPID                      & $1.3463$  & $149.1246$ & $600.1261$ & $162.8775$ & $40.9303$ & $146.4179$ & $668.9549$ & $650.4820$ \\
+$p$-value                    & $[0.26]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+L1.SUB.NUM                   & $37.6359$ & $49.7654$  & $19.1601$  & $98.7247$  & $27.2530$ & $233.0876$ & $204.4232$ & $90.2690$  \\
+$p$-value                    & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+Wu-Hausman                   & $20.9295$ & $23.8116$  & $44.0817$  & $9.8165$   & $6.2894$  & $9.9995$   & $20.6472$  & $49.3961$  \\
+$p$-value                    & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+(B) VOL               &           &            &            &            &           &            &            &            \\
+ & AAPL                & CSCO  & EBAY  & FB    & GOOG  & INTC  & MSFT  & YHOO       \\
+L1.MPID                      & $3.3525$  & $139.4275$ & $671.2843$ & $174.2196$ & $39.7615$ & $129.3896$ & $621.7281$ & $635.9997$ \\
+$p$-value                    & $[0.04]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+L1.SUB.NUM                   & $36.8763$ & $31.3482$  & $17.1792$  & $65.7633$  & $27.6174$ & $224.8208$ & $147.6018$ & $69.5554$  \\
+$p$-value                    & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+Wu-Hausman                   & $25.5240$ & $11.0042$  & $10.7909$  & $41.2444$  & $29.5139$ & $10.4909$  & $24.6375$  & $40.7745$  \\
+$p$-value                    & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+(C) SUB       &           &            &            &            &           &            &            &            \\
+ & AAPL                & CSCO  & EBAY  & FB    & GOOG  & INTC  & MSFT  & YHOO       \\
+L1.MPID                      & $1.1042$  & $146.8666$ & $686.2759$ & $167.0239$ & $36.5413$ & $138.0851$ & $700.1361$ & $793.9297$ \\
+$p$-value                    & $[0.33]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+L1.SUB.NUM                   & $33.5852$ & $22.7802$  & $7.9488$   & $20.9358$  & $27.8313$ & $194.1566$ & $147.4769$ & $52.2922$  \\
+$p$-value                    & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+Wu-Hausman                   & $54.6874$ & $47.4022$  & $39.5764$  & $41.9758$  & $64.9352$ & $32.6131$  & $18.8722$  & $23.8363$  \\
+$p$-value                    & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+(D) EXE       &           &            &            &            &           &            &            &            \\
+ & AAPL                & CSCO  & EBAY  & FB    & GOOG  & INTC  & MSFT  & YHOO       \\
+L1.MPID                      & $3.8857$  & $147.6724$ & $703.1845$ & $163.3928$ & $41.0730$ & $138.8149$ & $692.5449$ & $784.6604$ \\
+$p$-value                    & $[0.02]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+L1.SUB.NUM                   & $38.5449$ & $36.4058$  & $15.9906$  & $59.9954$  & $31.2399$ & $226.7980$ & $172.1684$ & $67.7944$  \\
+$p$-value                    & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+Wu-Hausman                   & $41.6753$ & $14.0255$  & $32.9097$  & $48.6890$  & $85.4116$ & $12.4984$  & $21.5540$  & $45.8788$  \\
+$p$-value                    & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+(E) DEPTH                 &           &            &            &            &           &            &            &            \\
+ & AAPL                & CSCO  & EBAY  & FB    & GOOG  & INTC  & MSFT  & YHOO       \\
+L1.MPID                      & $3.8857$  & $147.6724$ & $703.1845$ & $163.3928$ & $41.0730$ & $138.8149$ & $692.5449$ & $784.6604$ \\
+$p$-value                    & $[0.02]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+L1.SUB.NUM                   & $38.5449$ & $36.4058$  & $15.9906$  & $59.9954$  & $31.2399$ & $226.7980$ & $172.1684$ & $67.7944$  \\
+$p$-value                    & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+Wu-Hausman                   & $2.5025$  & $6.0314$   & $12.9104$  & $1.0058$   & $0.5394$  & $7.5641$   & $1.4186$   & $0.7116$   \\
+$p$-value                    & $[0.08]$  & $[0.00]$   & $[0.00]$   & $[0.37]$   & $[0.58]$  & $[0.00]$   & $[0.24]$   & $[0.49]$ \\
+(F) HASBROUCK               &           &            &            &            &           &            &            &            \\
+ & AAPL                & CSCO  & EBAY  & FB    & GOOG  & INTC  & MSFT  & YHOO       \\
+L1.MPID                      & $3.8857$  & $147.6724$ & $703.1845$ & $163.3928$ & $41.0730$ & $138.8149$ & $692.5449$ & $784.6604$ \\
+$p$-value                    & $[0.02]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+L1.SUB.NUM                   & $38.5449$ & $36.4058$  & $15.9906$  & $59.9954$  & $31.2399$ & $226.7980$ & $172.1684$ & $67.7944$  \\
+$p$-value                    & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   & $[0.00]$  & $[0.00]$   & $[0.00]$   & $[0.00]$   \\
+Wu-Hausman                   & $2.5025$  & $6.0314$   & $12.9104$  & $1.0058$   & $0.5394$  & $7.5641$   & $1.4186$   & $0.7116$   \\
+$p$-value                    & $[0.08]$  & $[0.00]$   & $[0.00]$   & $[0.37]$   & $[0.58]$  & $[0.00]$   & $[0.24]$   & $[0.49]$
+\end{tabular}}
+\end{table}
+
+
+
+
+
+
+
+
+In a first step, the instruments are checked whether they are weak and whether their is an endogeneity problem.
+
+
+
+
+
+
+\begin{figure}[htp!]
+\caption{Coefficients from Firm-Level Regressions} \label{indreg1}
+
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_1_VOL_GRID_SHORT_PRE.pdf}
+\caption{\tiny Caption} \label{fig:fig1a}
+\end{subfigure}
+\hspace*{\fill}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_1_RELSPR.pdf}
+\caption{\tiny Caption} \label{fig:fig1b}
+\end{subfigure}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_1_SUB_ALL_DVOL.pdf}
+\caption{\tiny Caption} \label{fig:fig1c}
+\end{subfigure}
+
+
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_1_EXE_ALL_DVOL.pdf}
+\caption{\tiny Caption} \label{fig:fig1g}
+\end{subfigure}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_1_DEPTH_TOTAL_DVOL.pdf}
+\caption{\tiny Caption} \label{fig:fig1h}
+\end{subfigure}
+\begin{subfigure}{0.31\textwidth}
+\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_1_OPEN.pdf}
+\caption{\tiny Caption} \label{fig:fig1h}
+\end{subfigure}
+%\begin{subfigure}{0.31\textwidth}
+%\includegraphics[width=\linewidth]{docs/Regression_Ratio_30sec_1_abs(RELDPR_MID)xNEG_DUMMY.pdf}
+%\caption{\tiny Caption} \label{fig:fig1h}
+%\end{subfigure}
+
+\begin{minipage}{\textwidth}
+\footnotesize
+The bar graphs in the figure above correspond to key coefficients from a regression of measures capturing various dimensions of market quality, on a dummy variable equal to one if a submitted order is attributed to an MPID, and zero otherwise. The dependent variables are calculated during the interval $[t, t+\Delta t]$, where $\Delta t$ is the time it takes to observe $N=20$ consecutive submissions, proceeding the submitted order. Results are presented separately for buy- and sell-side MPID-attributed orders, and separately for each firm in the sample, ordered according to the stock's mean stock price during the sample time period, 4-22 November, from highest to lowest. $t$-statistics are presented in parenthesis above the bar. Dark blue and red bars correspond to coefficients that are significant at a significance level of $\alpha=5\%$. Light blue and red bars correspond to coefficients that are insignificant at this level.
+\end{minipage}
+\end{figure}
+
+
+"for very
+large
+T
+, they argue that individual unit root time series tests"
+\url{https://fvela.files.wordpress.com/2011/10/baltagi-2005-econometric-analysis-of-panel-data-3e.pdf}
+
+\clearpage
+
+\begin{table}[!htbp] \centering
+  \caption{Panel Regression Results}
+  \label{}
+\resizebox{0.9\linewidth}{!}{%
+\begin{tabular}{@{\extracolsep{5pt}}lp{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}}
+\\[-1.8ex]\hline
+\hline \\[-1.8ex]
+ & \multicolumn{6}{c}{\textit{Dependent variable:}} \\
+\cline{2-7}
+\\[-1.8ex] & \multicolumn{4}{c}{MPID} & MPID.BUY & MPID.SELL \\
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6)\\
+\hline \\[-1.8ex]
+% L1.MPID.SUB.RATIO, k = c(1:mpidlags))1 & 0.276$^{***}$ & 0.274$^{***}$ & 0.272$^{***}$ & 0.272$^{***}$ &  &  \\
+%  & (0.028) & (0.029) & (0.028) & (0.028) &  &  \\
+%  L1.MPID.SUB.RATIO, k = c(1:mpidlags))2 & 0.134$^{***}$ & 0.130$^{***}$ & 0.128$^{***}$ & 0.128$^{***}$ &  &  \\
+%  & (0.014) & (0.015) & (0.014) & (0.014) &  &  \\
+%  L1.MPID.SUB.RATIO, k = c(1:mpidlags))3 & 0.084$^{***}$ & 0.081$^{***}$ & 0.079$^{***}$ & 0.078$^{***}$ &  &  \\
+%  & (0.009) & (0.010) & (0.008) & (0.008) &  &  \\
+%  L1.MPID.SUB.RATIO, k = c(1:mpidlags))4 & 0.077$^{***}$ & 0.074$^{***}$ & 0.071$^{***}$ & 0.071$^{***}$ &  &  \\
+%  & (0.006) & (0.007) & (0.006) & (0.006) &  &  \\
+%  L1.MPID.SUB.RATIO, k = c(1:mpidlags))5 & 0.074$^{***}$ & 0.070$^{***}$ & 0.067$^{***}$ & 0.067$^{***}$ &  &  \\
+%  & (0.006) & (0.007) & (0.007) & (0.007) &  &  \\
+%  L1.MPID.SUB.BUY.RATIO, k = c(1:mpidlags))1 &  &  &  &  & 0.239$^{***}$ &  \\
+%  &  &  &  &  & (0.024) &  \\
+%  L1.MPID.SUB.BUY.RATIO, k = c(1:mpidlags))2 &  &  &  &  & 0.117$^{***}$ &  \\
+%  &  &  &  &  & (0.012) &  \\
+%  L1.MPID.SUB.BUY.RATIO, k = c(1:mpidlags))3 &  &  &  &  & 0.073$^{***}$ &  \\
+%  &  &  &  &  & (0.008) &  \\
+%  L1.MPID.SUB.BUY.RATIO, k = c(1:mpidlags))4 &  &  &  &  & 0.071$^{***}$ &  \\
+%  &  &  &  &  & (0.005) &  \\
+%  L1.MPID.SUB.BUY.RATIO, k = c(1:mpidlags))5 &  &  &  &  & 0.066$^{***}$ &  \\
+%  &  &  &  &  & (0.007) &  \\
+%  L1.MPID.SUB.SELL.RATIO, k = c(1:mpidlags))1 &  &  &  &  &  & 0.243$^{***}$ \\
+%  &  &  &  &  &  & (0.027) \\
+%  L1.MPID.SUB.SELL.RATIO, k = c(1:mpidlags))2 &  &  &  &  &  & 0.122$^{***}$ \\
+%  &  &  &  &  &  & (0.012) \\
+%  L1.MPID.SUB.SELL.RATIO, k = c(1:mpidlags))3 &  &  &  &  &  & 0.071$^{***}$ \\
+%  &  &  &  &  &  & (0.010) \\
+%  L1.MPID.SUB.SELL.RATIO, k = c(1:mpidlags))4 &  &  &  &  &  & 0.069$^{***}$ \\
+%  &  &  &  &  &  & (0.008) \\
+%  L1.MPID.SUB.SELL.RATIO, k = c(1:mpidlags))5 &  &  &  &  &  & 0.065$^{***}$ \\
+%  &  &  &  &  &  & (0.008) \\
+  AGGR.MPID & $-$0.149$^{***}$ & $-$0.143$^{***}$ & $-$0.140$^{***}$ & $-$0.140$^{***}$ & $-$0.120$^{***}$ & $-$0.111$^{***}$ \\
+  & (0.017) & (0.017) & (0.017) & (0.017) & (0.017) & (0.017) \\
+  ORSZ.MPID & 0.063$^{**}$ & 0.056$^{**}$ & 0.057$^{**}$ & 0.057$^{**}$ & 0.037$^{*}$ & 0.043$^{**}$ \\
+  & (0.025) & (0.026) & (0.025) & (0.025) & (0.020) & (0.021) \\
+  L1.AGGR.TOTAL & 0.002 & 0.013 & 0.017$^{**}$ & 0.017$^{**}$ & 0.006 & 0.007 \\
+  & (0.008) & (0.008) & (0.008) & (0.009) & (0.008) & (0.008) \\
+  L1.ORSZ.TOTAL & 0.020$^{***}$ & 0.003 & 0.005 & 0.005 & $-$0.005 & $-$0.008 \\
+  & (0.005) & (0.009) & (0.008) & (0.008) & (0.007) & (0.008) \\
+  L1.VOL & 0.030$^{**}$ & 0.032$^{***}$ & 0.029$^{***}$ & 0.030$^{***}$ & 0.029$^{***}$ & 0.019$^{*}$ \\
+  & (0.013) & (0.011) & (0.011) & (0.011) & (0.008) & (0.010) \\
+  L1.RELSPR & 0.030$^{***}$ & 0.031$^{*}$ & 0.033$^{*}$ & 0.033$^{*}$ & 0.029$^{*}$ & 0.014 \\
+  & (0.005) & (0.018) & (0.019) & (0.019) & (0.017) & (0.014) \\
+  L1.SUB.ALL.DVOL & $-$0.054$^{***}$ & $-$0.052$^{***}$ & $-$0.050$^{***}$ & $-$0.050$^{***}$ &  &  \\
+  & (0.011) & (0.012) & (0.011) & (0.011) &  &  \\
+  L1.EXE.ALL.DVOL & 0.027 & 0.023$^{*}$ & 0.021 & 0.021 &  &  \\
+  & (0.017) & (0.014) & (0.015) & (0.015) &  &  \\
+  L1.DEPTH.ALL.DVOL & $-$0.033$^{***}$ & $-$0.025$^{***}$ & $-$0.026$^{***}$ & $-$0.026$^{***}$ &  &  \\
+  & (0.007) & (0.007) & (0.005) & (0.005) &  &  \\
+  L1.SUB.BUY.DVOL &  &  &  &  & $-$0.032$^{***}$ &  \\
+  &  &  &  &  & (0.003) &  \\
+  L1.EXE.BUY.DVOL &  &  &  &  & $-$0.004 &  \\
+  &  &  &  &  & (0.008) &  \\
+  L1.DEPTH.BUY.DVOL &  &  &  &  & $-$0.013$^{*}$ &  \\
+  &  &  &  &  & (0.007) &  \\
+  L1.SUB.SELL.DVOL &  &  &  &  &  & $-$0.025$^{**}$ \\
+  &  &  &  &  &  & (0.011) \\
+  L1.EXE.SELL.DVOL &  &  &  &  &  & 0.007 \\
+  &  &  &  &  &  & (0.010) \\
+  L1.DEPTH.SELL.DVOL &  &  &  &  &  & $-$0.009 \\
+  &  &  &  &  &  & (0.005) \\
+  L1.RELDPR & $-$0.026$^{***}$ & $-$0.030$^{***}$ & $-$0.032$^{***}$ & $-$0.029$^{***}$ & $-$0.027$^{**}$ & $-$0.033$^{***}$ \\
+  & (0.007) & (0.008) & (0.009) & (0.011) & (0.013) & (0.012) \\
+  L1.NEG.DUMMY & 0.038$^{***}$ & 0.020$^{**}$ & 0.019$^{**}$ &  & 0.015 &  \\
+  & (0.011) & (0.009) & (0.009) &  & (0.014) &  \\
+  L1.POS.DUMMY &  &  &  & 0.020$^{***}$ &  & 0.019$^{**}$ \\
+  &  &  &  & (0.007) &  & (0.009) \\
+  OPEN & 0.150$^{**}$ & 0.168$^{**}$ & 0.182$^{**}$ & 0.182$^{**}$ & 0.171$^{***}$ & 0.187$^{***}$ \\
+  & (0.065) & (0.073) & (0.072) & (0.072) & (0.060) & (0.069) \\
+  L1.HASBROUCK & $-$0.001 & 0.001 & $-$0.001 & $-$0.001 & $-$0.001 & 0.007 \\
+  & (0.008) & (0.007) & (0.007) & (0.006) & (0.006) & (0.007) \\
+%  DUMMIESday.f5 &  &  & 0.058$^{**}$ & 0.058$^{**}$ & 0.051$^{*}$ & 0.063$^{*}$ \\
+%  &  &  & (0.023) & (0.023) & (0.028) & (0.035) \\
+%  DUMMIESday.f6 &  &  & 0.044 & 0.044 & 0.054 & 0.032 \\
+%  &  &  & (0.055) & (0.055) & (0.047) & (0.085) \\
+%  DUMMIESday.f7 &  &  & 0.042 & 0.042 & 0.058 & 0.004 \\
+%  &  &  & (0.056) & (0.056) & (0.041) & (0.054) \\
+%  DUMMIESday.f8 &  &  & 0.020 & 0.020 & $-$0.012 & 0.019 \\
+%  &  &  & (0.057) & (0.057) & (0.032) & (0.078) \\
+%  DUMMIESday.f12 &  &  & $-$0.002 & $-$0.002 & $-$0.024 & 0.009 \\
+%  &  &  & (0.038) & (0.038) & (0.017) & (0.050) \\
+%  DUMMIESday.f13 &  &  & 0.019 & 0.019 & $-$0.010 & 0.020 \\
+%  &  &  & (0.057) & (0.057) & (0.046) & (0.062) \\
+%  DUMMIESday.f14 &  &  & $-$0.029 & $-$0.029 & $-$0.021 & $-$0.044 \\
+%  &  &  & (0.039) & (0.039) & (0.042) & (0.037) \\
+%  DUMMIESday.f15 &  &  & $-$0.050 & $-$0.049 & $-$0.053 & $-$0.044 \\
+%  &  &  & (0.058) & (0.058) & (0.055) & (0.045) \\
+%  DUMMIESday.f18 &  &  & $-$0.050 & $-$0.050 & $-$0.058$^{*}$ & $-$0.034 \\
+%  &  &  & (0.045) & (0.045) & (0.034) & (0.045) \\
+%  DUMMIESday.f19 &  &  & $-$0.060 & $-$0.060 & $-$0.054 & $-$0.060 \\
+%  &  &  & (0.046) & (0.046) & (0.037) & (0.051) \\
+%  DUMMIESday.f20 &  &  & $-$0.063 & $-$0.063 & $-$0.039 & $-$0.066 \\
+%  &  &  & (0.049) & (0.049) & (0.043) & (0.059) \\
+%  DUMMIESday.f21 &  &  & $-$0.086$^{**}$ & $-$0.086$^{**}$ & $-$0.117$^{***}$ & $-$0.036 \\
+% % &  &  & (0.039) & (0.039) & (0.035) & (0.055) \\
+% % DUMMIESday.f22 &  &  & $-$0.067 & $-$0.067 & $-$0.046 & $-$0.081 \\
+%  &  &  & (0.048) & (0.048) & (0.044) & (0.053) \\
+  L1.RELDPR*L1.NEG.DUMMY & $-$0.019 & $-$0.009 & $-$0.008 &  & $-$0.007 &  \\
+  & (0.013) & (0.014) & (0.015) &  & (0.016) &  \\
+  L1.RELDPR*L1.POS.DUMMY &  &  &  & $-$0.015 &  & $-$0.023$^{*}$ \\
+  &  &  &  & (0.012) &  & (0.013) \\
+  Constant & 0.047 &  &  &  &  &  \\
+  & (0.039) &  &  &  &  &  \\
+ Firm Fixed Effects & NO & YES & YES & YES& YES& YES \\
+ Day Dummies & NO & NO & YES & YES & YES & YES  \\
+Lagged Dep. Var. & YES & YES & YES & YES & YES & YES  \\
+Observations & 87,320 & 87,320 & 87,320 & 87,320 & 87,320 & 87,320 \\
+R$^{2}$ & 0.441 & 0.293 & 0.295 & 0.295 & 0.221 & 0.207 \\
+Adjusted R$^{2}$ & 0.441 & 0.293 & 0.295 & 0.295 & 0.221 & 0.207 \\
+%F Statistic & 3,631.542$^{***}$ (df = 19; 87300) & 1,904.185$^{***}$ (df = 19; 87293) & 1,141.153$^{***}$ (df = 32; 87280) & 1,141.180$^{***}$ (df = 32; 87280) & 775.266$^{***}$ (df = 32; 87280) & 712.668$^{***}$ (df = 32; 87280) \\
+\hline
+\hline \\[-1.8ex]
+\textit{Note:}  & \multicolumn{6}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\
+\end{tabular}}
+\end{table}
+
+
+\begin{table}[!htbp] \centering
+  \caption{Panel Regression Results}
+  \label{}
+\resizebox{0.9\linewidth}{!}{%
+\begin{tabular}{@{\extracolsep{5pt}}lp{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}}
+\\[-1.8ex]\hline
+\hline \\[-1.8ex]
+ & \multicolumn{6}{c}{\textit{Dependent variable:}} \\
+\cline{2-7}
+\\[-1.8ex] & \multicolumn{4}{c}{MPID} & MPID.BUY & MPID.SELL \\
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6)\\
+\hline \\[-1.8ex]
+% L1.MPID.SUB.RATIO, k = c(1:mpidlags))1 & 0.314$^{***}$ & 0.298$^{***}$ & 0.295$^{***}$ & 0.295$^{***}$ &  &  \\
+%  & (0.026) & (0.026) & (0.026) & (0.026) &  &  \\
+%  L1.MPID.SUB.RATIO, k = c(1:mpidlags))2 & 0.131$^{***}$ & 0.116$^{***}$ & 0.114$^{***}$ & 0.114$^{***}$ &  &  \\
+%  & (0.015) & (0.017) & (0.015) & (0.015) &  &  \\
+%  L1.MPID.SUB.RATIO, k = c(1:mpidlags))3 & 0.094$^{***}$ & 0.080$^{***}$ & 0.077$^{***}$ & 0.077$^{***}$ &  &  \\
+%  & (0.008) & (0.008) & (0.008) & (0.008) &  &  \\
+%  L1.MPID.SUB.RATIO, k = c(1:mpidlags))4 & 0.080$^{***}$ & 0.065$^{***}$ & 0.063$^{***}$ & 0.063$^{***}$ &  &  \\
+%  & (0.006) & (0.006) & (0.005) & (0.005) &  &  \\
+%  L1.MPID.SUB.RATIO, k = c(1:mpidlags))5 & 0.081$^{***}$ & 0.062$^{***}$ & 0.058$^{***}$ & 0.058$^{***}$ &  &  \\
+%  & (0.005) & (0.006) & (0.006) & (0.006) &  &  \\
+%  L1.MPID.SUB.BUY.RATIO, k = c(1:mpidlags))1 &  &  &  &  & 0.255$^{***}$ &  \\
+%  &  &  &  &  & (0.027) &  \\
+%  L1.MPID.SUB.BUY.RATIO, k = c(1:mpidlags))2 &  &  &  &  & 0.108$^{***}$ &  \\
+%  &  &  &  &  & (0.014) &  \\
+%  L1.MPID.SUB.BUY.RATIO, k = c(1:mpidlags))3 &  &  &  &  & 0.063$^{***}$ &  \\
+%  &  &  &  &  & (0.008) &  \\
+%  L1.MPID.SUB.BUY.RATIO, k = c(1:mpidlags))4 &  &  &  &  & 0.064$^{***}$ &  \\
+%  &  &  &  &  & (0.006) &  \\
+%  L1.MPID.SUB.BUY.RATIO, k = c(1:mpidlags))5 &  &  &  &  & 0.057$^{***}$ &  \\
+%  &  &  &  &  & (0.006) &  \\
+%  L1.MPID.SUB.SELL.RATIO, k = c(1:mpidlags))1 &  &  &  &  &  & 0.265$^{***}$ \\
+%  &  &  &  &  &  & (0.026) \\
+%  L1.MPID.SUB.SELL.RATIO, k = c(1:mpidlags))2 &  &  &  &  &  & 0.106$^{***}$ \\
+%  &  &  &  &  &  & (0.013) \\
+%  L1.MPID.SUB.SELL.RATIO, k = c(1:mpidlags))3 &  &  &  &  &  & 0.064$^{***}$ \\
+%  &  &  &  &  &  & (0.007) \\
+%  L1.MPID.SUB.SELL.RATIO, k = c(1:mpidlags))4 &  &  &  &  &  & 0.054$^{***}$ \\
+%  &  &  &  &  &  & (0.009) \\
+%  L1.MPID.SUB.SELL.RATIO, k = c(1:mpidlags))5 &  &  &  &  &  & 0.057$^{***}$ \\
+%  &  &  &  &  &  & (0.004) \\
+  AGGR.MPID & $-$0.041$^{*}$ & $-$0.017 & $-$0.016 & $-$0.016 & $-$0.017 & $-$0.016 \\
+  & (0.023) & (0.022) & (0.022) & (0.022) & (0.018) & (0.019) \\
+  ORSZ.MPID & 0.017 & $-$0.001 & $-$0.001 & $-$0.001 & $-$0.005 & $-$0.002 \\
+  & (0.019) & (0.019) & (0.019) & (0.019) & (0.015) & (0.017) \\
+  L1.AGGR.TOTAL & $-$0.010 & 0.023$^{***}$ & 0.029$^{***}$ & 0.029$^{***}$ & 0.016$^{**}$ & 0.018$^{*}$ \\
+  & (0.013) & (0.008) & (0.008) & (0.008) & (0.007) & (0.009) \\
+  L1.ORSZ.TOTAL & 0.057$^{***}$ & 0.004 & 0.006 & 0.006 & $-$0.004 & $-$0.009 \\
+  & (0.008) & (0.008) & (0.007) & (0.007) & (0.005) & (0.008) \\
+  L1.VOL & 0.041$^{***}$ & 0.046$^{***}$ & 0.044$^{***}$ & 0.044$^{***}$ & 0.040$^{***}$ & 0.029$^{***}$ \\
+  & (0.014) & (0.011) & (0.011) & (0.011) & (0.009) & (0.010) \\
+  L1.RELSPR & 0.049$^{***}$ & 0.050$^{***}$ & 0.049$^{***}$ & 0.048$^{***}$ & 0.036$^{**}$ & 0.031$^{**}$ \\
+  & (0.012) & (0.018) & (0.019) & (0.019) & (0.016) & (0.013) \\
+  L1.SUB.ALL & $-$0.056$^{***}$ & $-$0.050$^{***}$ & $-$0.055$^{***}$ & $-$0.055$^{***}$ &  &  \\
+  & (0.009) & (0.010) & (0.009) & (0.009) &  &  \\
+  L1.EXE.ALL & 0.004 & $-$0.010$^{*}$ & $-$0.009 & $-$0.009 &  &  \\
+  & (0.009) & (0.005) & (0.006) & (0.006) &  &  \\
+  L1.DEPTH.ALL & $-$0.047$^{***}$ & $-$0.028$^{***}$ & $-$0.026$^{***}$ & $-$0.026$^{***}$ &  &  \\
+  & (0.007) & (0.008) & (0.007) & (0.007) &  &  \\
+  L1.SUB.BUY &  &  &  &  & $-$0.035$^{***}$ &  \\
+  &  &  &  &  & (0.008) &  \\
+  L1.EXE.BUY &  &  &  &  & $-$0.017$^{***}$ &  \\
+  &  &  &  &  & (0.005) &  \\
+  L1.DEPTH.BUY &  &  &  &  & $-$0.015$^{*}$ &  \\
+  &  &  &  &  & (0.008) &  \\
+  L1.SUB.SELL &  &  &  &  &  & $-$0.034$^{***}$ \\
+  &  &  &  &  &  & (0.008) \\
+  L1.EXE.SELL &  &  &  &  &  & $-$0.013$^{***}$ \\
+  &  &  &  &  &  & (0.004) \\
+  L1.DEPTH.SELL &  &  &  &  &  & $-$0.009 \\
+  &  &  &  &  &  & (0.007) \\
+  L1.RELDPR & $-$0.002 & $-$0.012$^{*}$ & $-$0.014$^{**}$ & $-$0.010 & $-$0.034$^{***}$ & $-$0.027$^{*}$ \\
+  & (0.008) & (0.007) & (0.007) & (0.010) & (0.011) & (0.014) \\
+  L1.NEG.DUMMY & 0.076$^{***}$ & 0.025$^{***}$ & 0.023$^{***}$ &  & 0.027$^{**}$ &  \\
+  & (0.025) & (0.007) & (0.008) &  & (0.012) &  \\
+  L1.POS.DUMMY &  &  &  & 0.030$^{***}$ &  & 0.032$^{***}$ \\
+  &  &  &  & (0.009) &  & (0.008) \\
+  OPEN & 0.143$^{**}$ & 0.230$^{***}$ & 0.252$^{***}$ & 0.253$^{***}$ & 0.255$^{***}$ & 0.236$^{***}$ \\
+  & (0.058) & (0.062) & (0.060) & (0.060) & (0.043) & (0.054) \\
+  L1.HASBROUCK & 0.003 & 0.010$^{*}$ & 0.006 & 0.007 & 0.003 & 0.007 \\
+  & (0.005) & (0.005) & (0.005) & (0.005) & (0.006) & (0.006) \\
+%  DUMMIESday.f5 &  &  & 0.092$^{***}$ & 0.092$^{***}$ & 0.077$^{***}$ & 0.096$^{**}$ \\
+%  &  &  & (0.029) & (0.029) & (0.021) & (0.044) \\
+%  DUMMIESday.f6 &  &  & 0.114$^{***}$ & 0.115$^{***}$ & 0.089$^{**}$ & 0.129$^{***}$ \\
+%  &  &  & (0.035) & (0.035) & (0.035) & (0.042) \\
+%  DUMMIESday.f7 &  &  & 0.174$^{***}$ & 0.175$^{***}$ & 0.194$^{***}$ & 0.124$^{**}$ \\
+%  &  &  & (0.054) & (0.054) & (0.051) & (0.054) \\
+%  DUMMIESday.f8 &  &  & 0.127$^{***}$ & 0.127$^{***}$ & 0.116$^{***}$ & 0.097$^{***}$ \\
+%  &  &  & (0.026) & (0.026) & (0.018) & (0.032) \\
+%  DUMMIESday.f12 &  &  & 0.033 & 0.033 & 0.023 & 0.026 \\
+%  &  &  & (0.044) & (0.044) & (0.034) & (0.042) \\
+%  DUMMIESday.f13 &  &  & 0.063$^{*}$ & 0.062 & 0.044 & 0.055 \\
+%  &  &  & (0.038) & (0.038) & (0.028) & (0.042) \\
+%  DUMMIESday.f14 &  &  & 0.027 & 0.028 & 0.025 & 0.015 \\
+%  &  &  & (0.038) & (0.038) & (0.029) & (0.040) \\
+%  DUMMIESday.f15 &  &  & $-$0.008 & $-$0.008 & 0.002 & $-$0.015 \\
+%  &  &  & (0.043) & (0.043) & (0.043) & (0.029) \\
+%  DUMMIESday.f18 &  &  & 0.047 & 0.048 & 0.051 & 0.047 \\
+%  &  &  & (0.048) & (0.048) & (0.037) & (0.045) \\
+%  DUMMIESday.f19 &  &  & 0.054 & 0.055 & 0.077$^{**}$ & 0.034 \\
+%  &  &  & (0.034) & (0.034) & (0.034) & (0.028) \\
+%  DUMMIESday.f20 &  &  & 0.055$^{*}$ & 0.056$^{*}$ & 0.089$^{***}$ & 0.040 \\
+%  &  &  & (0.032) & (0.032) & (0.027) & (0.031) \\
+%  DUMMIESday.f21 &  &  & $-$0.003 & $-$0.003 & $-$0.024 & 0.035 \\
+%  &  &  & (0.030) & (0.030) & (0.029) & (0.028) \\
+%  DUMMIESday.f22 &  &  & 0.022 & 0.023 & 0.044 & 0.009 \\
+%  &  &  & (0.032) & (0.032) & (0.031) & (0.025) \\
+  L1.RELDPR.*L1.NEG.DUMMY & $-$0.040$^{*}$ & $-$0.011 & $-$0.010 &  & 0.016$^{*}$ &  \\
+  & (0.021) & (0.013) & (0.014) &  & (0.009) &  \\
+  L1.RELDPR.MID*L1.POS.DUMMY &  &  &  & $-$0.021$^{*}$ &  & $-$0.00004 \\
+  &  &  &  & (0.012) &  & (0.018) \\
+  Constant & $-$0.110 &  &  &  &  &  \\
+  & (0.073) &  &  &  &  &  \\
+ Firm Fixed Effects & NO & YES & YES & YES& YES& YES \\
+ Day Dummies & NO & NO & YES & YES & YES & YES  \\
+Lagged Dep. Var. & YES & YES & YES & YES & YES & YES  \\
+Observations & 87,320 & 87,320 & 87,320 & 87,320 & 87,320 & 87,320 \\
+R$^{2}$ & 0.441 & 0.293 & 0.295 & 0.295 & 0.221 & 0.207 \\
+Adjusted R$^{2}$ & 0.441 & 0.293 & 0.295 & 0.295 & 0.221 & 0.207 \\
+%F Statistic & 3,631.542$^{***}$ (df = 19; 87300) & 1,904.185$^{***}$ (df = 19; 87293) & 1,141.153$^{***}$ (df = 32; 87280) & 1,141.180$^{***}$ (df = 32; 87280) & 775.266$^{***}$ (df = 32; 87280) & 712.668$^{***}$ (df = 32; 87280) \\
+\hline
+\hline \\[-1.8ex]
+\textit{Note:}  & \multicolumn{6}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\
+\end{tabular}}
+\end{table}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\begin{table}[!htbp] \centering
+  \caption{Post Panel Regression Results}
+  \label{}
+  \resizebox{1\linewidth}{!}{%
+\begin{tabular}{@{\extracolsep{5pt}}lp{2cm}p{2cm}p{2cm}p{2cm}p{2cm}p{2cm}}
+\\[-1.8ex]\hline
+\hline \\[-1.8ex]
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6)\\ \\ \hline \\
+ & \multicolumn{6}{c}{Panel A: \textit{Dependent variable:}} \\
+%\cline{2-7}
+\\[-1.8ex] & \multicolumn{6}{c}{RELSPR} \\
+\hline \\[-1.8ex]
+  L1.MPID.SUB & $-$0.002  & $-$0.081$^{***}$ & $-$0.061 & $-$0.113$^{***}$ & $-$0.011 & $-$0.002 \\
+  & (0.010) & (0.031) & (0.038) & (0.041) & (0.047) & (0.035) \\ \\
+  R$^{2}$ & 0.456 & 0.881 & 0.881 & 0.880 & 0.880 & 0.896 \\ \hline \\
+   & \multicolumn{6}{c}{Panel B: \textit{Dependent variable:}} \\
+\\[-1.8ex] & \multicolumn{6}{c}{VOL} \\
+%\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6)\\
+\hline \\[-1.8ex]
+  L1.MPID.SUB & 0.008 & 0.030$^{**}$ & $-$0.011 & $-$0.092$^{***}$ & $-$0.030$^{**}$ & $-$0.023$^{*}$ \\
+  & (0.005) & (0.013) & (0.015) & (0.024) & (0.015) & (0.012) \\ \\
+  R$^{2}$ & 0.392 & 0.280 & 0.282 & 0.279 & 0.277 & 0.281 \\ \hline \\
+ & \multicolumn{6}{c}{Panel C: \textit{Dependent variable:}} \\
+%\cline{2-7}
+\\[-1.8ex] & \multicolumn{3}{c}{SUB.ALL} & SUB.BUY & SUB.SELL & SUB.ALL \\
+%\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6)\\
+\hline \\[-1.8ex]
+  L1.MPID.SUB & $-$0.002 & 0.071$^{**}$ & 0.113$^{***}$ & 0.098$^{***}$ & 0.093$^{***}$ & 0.152$^{***}$ \\
+  & (0.004) & (0.031) & (0.024) & (0.023) & (0.034) & (0.029) \\ \\
+  R$^{2}$ & 0.753 & 0.300 & 0.302 & 0.285 & 0.227 & 0.332 \\ \hline \\
+ & \multicolumn{6}{c}{Panel D: \textit{Dependent variable:}} \\
+%\cline{2-7}
+\\[-1.8ex] & \multicolumn{3}{c}{EXE.ALL} & EXE.BUY & EXE.SELL & EXE.ALL \\
+%\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6)\\
+\hline \\[-1.8ex]
+  L1.MPID.SUB & 0.020$^{*}$ & 0.169$^{***}$ & 0.188$^{***}$ & 0.062$^{***}$ & 0.155$^{***}$ & 0.177$^{***}$ \\
+  & (0.011) & (0.015) & (0.022) & (0.016) & (0.021) & (0.031) \\  \\
+  R$^{2}$ & 0.448 & 0.255 & 0.257 & 0.198 & 0.184 & 0.253 \\ \hline \\
+ & \multicolumn{6}{c}{Panel E: \textit{Dependent variable:}} \\
+%\cline{2-7}
+\\[-1.8ex] & \multicolumn{3}{c}{DEPTH.ALL} & DEPTH.BUY & DEPTH.SELL & DEPTH.ALL \\
+%\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6)\\
+\hline \\[-1.8ex]
+  L1.MPID.SUB & $-$0.016$^{***}$ & 0.038 & 0.068$^{***}$ & 0.042$^{*}$ & 0.049$^{**}$ & 0.076$^{***}$ \\
+  & (0.004) & (0.025) & (0.024) & (0.023) & (0.023) & (0.025) \\  \\
+  R$^{2}$ & 0.474 & 0.566 & 0.567 & 0.486 & 0.478 & 0.504 \\
+   \hline \\[-1.8ex] \\
+Model & OLS & 2SLS & 2SLS & 2SLS & 2SLS & 2SLS \\
+Ind. Var. & MPID & MPID & MPID & MPID.BUY & MPID.SELL & MPID.NUM \\
+Firm Fixed Effects & YES & NO & NO & NO & NO & NO  \\
+Day Dummies & YES & NO & YES & YES & YES & YES  \\
+Lagged Dep. Var. & YES & YES & YES & YES & YES & YES \\
+Observations & 87,320 & 76,398 & 76,398 & 76,398 & 76,398 & 87,312 \\
+%R$^{2}$ & 0.456 & 0.881 & 0.881 & 0.880 & 0.880 & 0.896 \\
+%Adjusted R$^{2}$ & 0.455 & 0.880 & 0.880 & 0.880 & 0.880 & 0.896 \\
+%F Statistic & 2,282.843$^{***}$ (df = 32; 87280) & 29,622.040$^{***}$ (df = 19; 76378) & 17,589.190$^{***}$ (df = 32; 76365) & 17,517.540$^{***}$ (df = 32; 76365) & 17,537.750$^{***}$ (df = 32; 76365) & 24,346.960$^{***}$ (df = 31; 87280) \\
+\hline
+\hline \\[-1.8ex]
+\textit{Note:}  & \multicolumn{6}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\
+\end{tabular}  }
+\end{table}
+
+
+
+
+
+
+% Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Mo, Mai 29, 2017 - 17:50:04
+\begin{table}[!htbp] \centering
+  \caption{Post Panel Regression Results: TMBR}
+  \label{}
+    \resizebox{1\linewidth}{!}{%
+  \begin{tabular}{@{\extracolsep{5pt}}lp{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}}
+\\[-1.8ex]\hline
+\hline \\[-1.8ex]
+ & \multicolumn{9}{c}{\textit{Dependent variable:}} \\
+\cline{2-10}
+\\[-1.8ex] & RELSPR & VOL & SUB.ALL & SUB.BUY & SUB.SELL & EXE.ALL & EXE.BUY & EXE.SELL & DEPTH.ALL \\
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9)\\
+\hline \\[-1.8ex]
+ L1.MPID.SUB & $-$0.062$^{*}$ & $-$0.018 & 0.129$^{***}$ & 0.136$^{***}$ & 0.117$^{***}$ & 0.181$^{***}$ & 0.086$^{***}$ & 0.161$^{***}$ & 0.083$^{***}$ \\
+  & (0.033) & (0.018) & (0.022) & (0.023) & (0.031) & (0.019) & (0.011) & (0.018) & (0.023) \\
+  L1.AGGR.TOTAL & $-$0.098$^{***}$ & $-$0.019$^{*}$ & 0.005 & $-$0.0004 & 0.028$^{***}$ & $-$0.007 & $-$0.007 & $-$0.003 & 0.011$^{*}$ \\
+  & (0.010) & (0.010) & (0.010) & (0.009) & (0.004) & (0.014) & (0.010) & (0.010) & (0.006) \\
+  L1.ORSZ.TOTAL & 0.023$^{***}$ & 0.007 & 0.022$^{*}$ & 0.041$^{***}$ & 0.038$^{***}$ & $-$0.004 & 0.026$^{***}$ & 0.020$^{**}$ & 0.018$^{*}$ \\
+  & (0.008) & (0.012) & (0.013) & (0.011) & (0.012) & (0.015) & (0.008) & (0.009) & (0.011) \\
+  L1.AGGR.MPID & 0.009 & 0.020$^{***}$ & 0.005 & 0.006 & 0.004 & 0.005 & 0.004 & 0.006 & 0.016$^{***}$ \\
+  & (0.010) & (0.004) & (0.006) & (0.006) & (0.007) & (0.006) & (0.006) & (0.007) & (0.005) \\
+  L1.ORSZ.MPID & $-$0.001 & 0.002 & $-$0.014$^{***}$ & $-$0.013$^{***}$ & $-$0.015$^{***}$ & $-$0.009 & $-$0.010$^{*}$ & $-$0.005 & 0.005 \\
+  & (0.010) & (0.009) & (0.004) & (0.004) & (0.003) & (0.008) & (0.006) & (0.008) & (0.005) \\
+  L1.VOL & $-$0.033$^{**}$ & 0.108$^{***}$ & $-$0.025$^{***}$ & $-$0.022$^{***}$ & $-$0.012$^{*}$ & $-$0.014 & $-$0.010 & 0.008 & 0.026$^{***}$ \\
+  & (0.013) & (0.030) & (0.008) & (0.008) & (0.006) & (0.016) & (0.013) & (0.014) & (0.007) \\
+%  L1.RELSPR, k = 1:depvarlags)1 & 0.383$^{***}$ &  &  &  &  &  &  &  &  \\
+%  & (0.030) &  &  &  &  &  &  &  &  \\
+%  L1.RELSPR, k = 1:depvarlags)2 & 0.184$^{***}$ &  &  &  &  &  &  &  &  \\
+%  & (0.007) &  &  &  &  &  &  &  &  \\
+%  L1.RELSPR, k = 1:depvarlags)3 & 0.131$^{***}$ &  &  &  &  &  &  &  &  \\
+%  & (0.011) &  &  &  &  &  &  &  &  \\
+%  L1.RELSPR, k = 1:depvarlags)4 & 0.123$^{***}$ &  &  &  &  &  &  &  &  \\
+%  & (0.011) &  &  &  &  &  &  &  &  \\
+%  L1.RELSPR, k = 1:depvarlags)5 & 0.129$^{***}$ &  &  &  &  &  &  &  &  \\
+%  & (0.005) &  &  &  &  &  &  &  &  \\
+%  L1.VOL.GRID.SHORT.PRE, k = 1:depvarlags)1 &  & 0.108$^{***}$ &  &  &  &  &  &  &  \\
+%  &  & (0.030) &  &  &  &  &  &  &  \\
+%  L1.VOL.GRID.SHORT.PRE, k = 1:depvarlags)2 &  & 0.075$^{***}$ &  &  &  &  &  &  &  \\
+%  &  & (0.011) &  &  &  &  &  &  &  \\
+%  L1.VOL.GRID.SHORT.PRE, k = 1:depvarlags)3 &  & 0.045$^{***}$ &  &  &  &  &  &  &  \\
+%  &  & (0.011) &  &  &  &  &  &  &  \\
+%  L1.VOL.GRID.SHORT.PRE, k = 1:depvarlags)4 &  & 0.058$^{***}$ &  &  &  &  &  &  &  \\
+%  &  & (0.013) &  &  &  &  &  &  &  \\
+%  L1.VOL.GRID.SHORT.PRE, k = 1:depvarlags)5 &  & 0.021$^{**}$ &  &  &  &  &  &  &  \\
+%  &  & (0.009) &  &  &  &  &  &  &  \\
+  L1.RELSPR & 0.383$^{***}$ & 0.009$^{*}$ & $-$0.026$^{***}$ & $-$0.016$^{***}$ & $-$0.020$^{***}$ & $-$0.031$^{***}$ & $-$0.026$^{***}$ & $-$0.017$^{**}$ & $-$0.028$^{***}$ \\
+  & (0.030) & (0.006) & (0.007) & (0.006) & (0.006) & (0.009) & (0.006) & (0.008) & (0.007) \\
+  L1.SUB.ALL & $-$0.029$^{***}$ & 0.018 & 0.026$^{***}$ &  &  & 0.072$^{**}$ &  &  & 0.004 \\
+  & (0.007) & (0.034) & (0.008) &  &  & (0.035) &  &  & (0.015) \\
+%  L1.SUB.ALL.DVOL, k = 1:depvarlags)1 &  &  & 0.268$^{***}$ &  &  &  &  &  &  \\
+%  &  &  & (0.020) &  &  &  &  &  &  \\
+%  L1.SUB.ALL.DVOL, k = 1:depvarlags)2 &  &  & $-$0.005 &  &  &  &  &  &  \\
+%  &  &  & (0.013) &  &  &  &  &  &  \\
+%  L1.SUB.ALL.DVOL, k = 1:depvarlags)3 &  &  & 0.052$^{***}$ &  &  &  &  &  &  \\
+%  &  &  & (0.007) &  &  &  &  &  &  \\
+%  L1.SUB.ALL.DVOL, k = 1:depvarlags)4 &  &  & 0.057$^{***}$ &  &  &  &  &  &  \\
+%  &  &  & (0.011) &  &  &  &  &  &  \\
+%  L1.SUB.ALL.DVOL, k = 1:depvarlags)5 &  &  & 0.026$^{***}$ &  &  &  &  &  &  \\
+%  &  &  & (0.008) &  &  &  &  &  &  \\
+  L1.EXE.ALL & 0.111$^{***}$ & 0.160$^{***}$ & 0.023 &  &  & 0.188$^{***}$ &  &  & $-$0.108$^{***}$ \\
+  & (0.015) & (0.027) & (0.024) &  &  & (0.041)  &  &  & (0.013) \\
+%  L1.EXE.ALL.DVOL, k = 1:depvarlags)1 &  &  &  &  &  & 0.188$^{***}$ &  &  &  \\
+%  &  &  &  &  &  & (0.041) &  &  &  \\
+%  L1.EXE.ALL.DVOL, k = 1:depvarlags)2 &  &  &  &  &  & 0.108$^{***}$ &  &  &  \\
+%  &  &  &  &  &  & (0.010) &  &  &  \\
+%  L1.EXE.ALL.DVOL, k = 1:depvarlags)3 &  &  &  &  &  & 0.073$^{***}$ &  &  &  \\%
+% &  &  &  &  &  & (0.010) &  &  &  \\
+%  L1.EXE.ALL.DVOL, k = 1:depvarlags)4 &  &  &  &  &  & 0.069$^{***}$ &  &  &  \\
+%  &  &  &  &  &  & (0.008) &  &  &  \\
+%  L1.EXE.ALL.DVOL, k = 1:depvarlags)5 &  &  &  &  &  & 0.046$^{***}$ &  &  &  \\
+%  &  &  &  &  &  & (0.007) &  &  &  \\
+  L1.DEPTH.ALL & $-$0.020$^{*}$ & $-$0.013 & 0.113$^{***}$ &  &  & 0.200$^{***}$ &  &  & 0.615$^{***}$ \\
+  & (0.012) & (0.008) & (0.018) &  &  & (0.036) &  &  & (0.071) \\
+%  L1.SUB.BUY.DVOL, k = 1:depvarlags)1 &  &  &  & 0.248$^{***}$ &  &  &  &  &  \\
+%  &  &  &  & (0.021) &  &  &  &  &  \\
+%  L1.SUB.BUY.DVOL, k = 1:depvarlags)2 &  &  &  & 0.018 &  &  &  &  &  \\
+%  &  &  &  & (0.013) &  &  &  &  &  \\
+%  L1.SUB.BUY.DVOL, k = 1:depvarlags)3 &  &  &  & 0.049$^{***}$ &  &  &  &  &  \\
+%  &  &  &  & (0.009) &  &  &  &  &  \\
+%  L1.SUB.BUY.DVOL, k = 1:depvarlags)4 &  &  &  & 0.049$^{***}$ &  &  &  &  &  \\
+%  &  &  &  & (0.011) &  &  &  &  &  \\
+%  L1.SUB.BUY.DVOL, k = 1:depvarlags)5 &  &  &  & 0.032$^{***}$ &  &  &  &  &  \\
+%  &  &  &  & (0.012) &  &  &  &  &  \\
+  L1.EXE.BUY &  &  &  & 0.035$^{***}$ &  &  & 0.188$^{***}$ &  &  \\
+  &  &  &  & (0.010) &  &  & (0.026) &  &  \\
+  L1.SUB.BUY &  &  &  & 0.248$^{***}$ &  &  & 0.063$^{***}$ &  &  \\
+  &  &  &  & (0.021) &  &  & (0.014) &  &  \\
+%  L1.EXE.BUY.DVOL, k = 1:depvarlags)1 &  &  &  &  &  &  & 0.188$^{***}$ &  &  \\
+%  &  &  &  &  &  &  & (0.026) &  &  \\
+%  L1.EXE.BUY.DVOL, k = 1:depvarlags)2 &  &  &  &  &  &  & 0.067$^{***}$ &  &  \\
+%  &  &  &  &  &  &  & (0.011) &  &  \\
+%  L1.EXE.BUY.DVOL, k = 1:depvarlags)3 &  &  &  &  &  &  & 0.068$^{***}$ &  &  \\
+%  &  &  &  &  &  &  & (0.007) &  &  \\
+%  L1.EXE.BUY.DVOL, k = 1:depvarlags)4 &  &  &  &  &  &  & 0.050$^{***}$ &  &  \\
+%  &  &  &  &  &  &  & (0.006) &  &  \\
+%  L1.EXE.BUY.DVOL, k = 1:depvarlags)5 &  &  &  &  &  &  & 0.043$^{***}$ &  &  \\
+%  &  &  &  &  &  &  & (0.006) &  &  \\
+  L1.DEPTH.BUY &  &  &  & 0.084$^{***}$ &  &  & 0.131$^{***}$ &  &  \\
+  &  &  &  & (0.021) &  &  & (0.012) &  &  \\
+%  L1.SUB.SELL.DVOL, k = 1:depvarlags)1 &  &  &  &  & 0.231$^{***}$ &  &  &  &  \\
+%  &  &  &  &  & (0.027) &  &  &  &  \\
+%  L1.SUB.SELL.DVOL, k = 1:depvarlags)2 &  &  &  &  & 0.014 &  &  &  &  \\
+%  &  &  &  &  & (0.011) &  &  &  &  \\
+%  L1.SUB.SELL.DVOL, k = 1:depvarlags)3 &  &  &  &  & 0.054$^{***}$ &  &  &  &  \\
+%  &  &  &  &  & (0.006) &  &  &  &  \\
+%  L1.SUB.SELL.DVOL, k = 1:depvarlags)4 &  &  &  &  & 0.064$^{***}$ &  &  &  &  \\
+%  &  &  &  &  & (0.009) &  &  &  &  \\
+%  L1.SUB.SELL.DVOL, k = 1:depvarlags)5 &  &  &  &  & 0.031$^{***}$ &  &  &  &  \\
+%  &  &  &  &  & (0.004) &  &  &  &  \\
+  L1.EXE.SELL &  &  &  &  & 0.032$^{*}$ &  &  & 0.154$^{***}$ &  \\
+  &  &  &  &  & (0.018) &  &  & (0.033) &  \\
+  L1.SUB.SELL &  &  &  &  & 0.231$^{***}$ &  &  & 0.050$^{***}$ &  \\
+  &  &  &  &  & (0.027) &  &  & (0.016) &  \\
+%  L1.EXE.SELL.DVOL, k = 1:depvarlags)1 &  &  &  &  &  &  &  & 0.154$^{***}$ &  \\
+%  &  &  &  &  &  &  &  & (0.033) &  \\
+%  L1.EXE.SELL.DVOL, k = 1:depvarlags)2 &  &  &  &  &  &  &  & 0.099$^{***}$ &  \\
+%  &  &  &  &  &  &  &  & (0.014) &  \\
+%  L1.EXE.SELL.DVOL, k = 1:depvarlags)3 &  &  &  &  &  &  &  & 0.044$^{***}$ &  \\
+%  &  &  &  &  &  &  &  & (0.012) &  \\
+%  L1.EXE.SELL.DVOL, k = 1:depvarlags)4 &  &  &  &  &  &  &  & 0.061$^{***}$ &  \\
+%  &  &  &  &  &  &  &  & (0.011) &  \\
+%  L1.EXE.SELL.DVOL, k = 1:depvarlags)5 &  &  &  &  &  &  &  & 0.029$^{***}$ &  \\
+%  &  &  &  &  &  &  &  & (0.007) &  \\
+  L1.DEPTH.SELL &  &  &  &  & 0.069$^{***}$ &  &  & 0.194$^{***}$ &  \\
+  &  &  &  &  & (0.013) &  &  & (0.043) &  \\
+%  L1.DEPTH.TOTAL.DVOL, k = 1:depvarlags)1 &  &  &  &  &  &  &  &  & 0.615$^{***}$ \\
+%  &  &  &  &  &  &  &  &  & (0.071) \\
+%  L1.DEPTH.TOTAL.DVOL, k = 1:depvarlags)2 &  &  &  &  &  &  &  &  & 0.060 \\
+%  &  &  &  &  &  &  &  &  & (0.038) \\
+%  L1.DEPTH.TOTAL.DVOL, k = 1:depvarlags)3 &  &  &  &  &  &  &  &  & 0.056$^{***}$ \\
+%  &  &  &  &  &  &  &  &  & (0.017) \\
+%  L1.DEPTH.TOTAL.DVOL, k = 1:depvarlags)4 &  &  &  &  &  &  &  &  & 0.044$^{***}$ \\
+%  &  &  &  &  &  &  &  &  & (0.008) \\
+%  L1.DEPTH.TOTAL.DVOL, k = 1:depvarlags)5 &  &  &  &  &  &  &  &  & 0.053$^{***}$ \\
+%  &  &  &  &  &  &  &  &  & (0.010) \\
+  OPEN & 0.173$^{***}$ & 0.689$^{***}$ & $-$0.143$^{***}$ & $-$0.127$^{***}$ & $-$0.121$^{***}$ & 0.061 & 0.133$^{***}$ & 0.025 & $-$0.210$^{***}$ \\
+  & (0.036) & (0.065) & (0.031) & (0.018) & (0.036) & (0.046) & (0.026) & (0.039) & (0.028) \\
+  L1.RELDPR & $-$0.040$^{**}$ & 0.049$^{***}$ & 0.030$^{*}$ & 0.007 & 0.053$^{***}$ & 0.025 & 0.046$^{***}$ & 0.026 & $-$0.026$^{***}$ \\
+  & (0.019) & (0.017) & (0.017) & (0.016) & (0.016) & (0.018) & (0.015) & (0.023) & (0.003) \\
+  L1.NEG.DUMMY & $-$0.185$^{***}$ & $-$0.019 & $-$0.002 & 0.007 & $-$0.016 & 0.0002 & 0.024 & $-$0.021 & $-$0.046$^{***}$ \\
+  & (0.039) & (0.030) & (0.009) & (0.013) & (0.020) & (0.008) & (0.016) & (0.016) & (0.009) \\
+  L1.SUB.NUM & $-$0.028$^{**}$ & 0.155$^{***}$ & 0.434$^{***}$ & 0.414$^{***}$ & 0.345$^{***}$ & 0.136$^{***}$ & 0.193$^{***}$ & 0.174$^{***}$ & 0.050$^{*}$ \\
+  & (0.013) & (0.020) & (0.036) & (0.035) & (0.030) & (0.027) & (0.031) & (0.023) & (0.025) \\
+%  DUMMIESday.f5 & 0.013 & 0.037$^{*}$ & $-$0.002 & 0.012 & $-$0.013 & $-$0.044$^{*}$ & $-$0.016 & $-$0.028$^{*}$ & 0.0003 \\
+%  & (0.014) & (0.020) & (0.020) & (0.021) & (0.024) & (0.025) & (0.028) & (0.015) & (0.018) \\
+%  DUMMIESday.f6 & 0.055$^{***}$ & 0.079$^{*}$ & $-$0.024 & $-$0.013 & $-$0.016 & 0.016 & 0.031 & 0.026 & $-$0.052$^{**}$ \\
+%  & (0.018) & (0.043) & (0.036) & (0.035) & (0.039) & (0.053) & (0.049) & (0.055) & (0.026) \\
+% DUMMIESday.f7 & 0.074$^{***}$ & 0.097$^{***}$ & $-$0.017 & $-$0.018 & 0.010 & $-$0.032 & 0.007 & $-$0.030 & $-$0.093$^{***}$ \\
+%  & (0.027) & (0.017) & (0.026) & (0.025) & (0.031) & (0.026) & (0.028) & (0.022) & (0.012) \\
+%  DUMMIESday.f8 & 0.046$^{**}$ & 0.045$^{**}$ & 0.006 & 0.018 & 0.006 & $-$0.032$^{**}$ & $-$0.047$^{**}$ & $-$0.006 & $-$0.076$^{***}$ \\
+%  & (0.020) & (0.019) & (0.013) & (0.014) & (0.017) & (0.016) & (0.020) & (0.020) & (0.015) \\
+%  DUMMIESday.f12 & 0.041$^{**}$ & 0.029$^{*}$ & $-$0.027 & $-$0.001 & $-$0.026 & $-$0.033$^{**}$ & $-$0.001 & $-$0.032$^{**}$ & $-$0.002 \\
+%  & (0.020) & (0.017) & (0.031) & (0.026) & (0.033) & (0.014) & (0.009) & (0.016) & (0.009) \\
+%  DUMMIESday.f13 & 0.042$^{*}$ & 0.003 & 0.002 & 0.028$^{**}$ & $-$0.012 & 0.014 & $-$0.011 & 0.045 & $-$0.021 \\
+%  & (0.021) & (0.033) & (0.012) & (0.012) & (0.012) & (0.031) & (0.033) & (0.028) & (0.021) \\
+%  DUMMIESday.f14 & 0.045$^{***}$ & 0.007 & 0.005 & 0.006 & 0.028 & 0.026 & 0.034 & 0.023 & $-$0.015 \\
+%  & (0.018) & (0.028) & (0.032) & (0.036) & (0.035) & (0.054) & (0.056) & (0.055) & (0.030) \\
+%  DUMMIESday.f15 & 0.028 & $-$0.063$^{***}$ & 0.046 & 0.049 & 0.028 & $-$0.032 & $-$0.045 & $-$0.030 & 0.023 \\
+%  & (0.021) & (0.019) & (0.037) & (0.037) & (0.040) & (0.034) & (0.034) & (0.028) & (0.021) \\
+%  DUMMIESday.f18 & 0.069$^{**}$ & $-$0.004 & 0.063 & 0.048 & 0.074 & $-$0.010 & 0.022 & $-$0.052$^{*}$ & $-$0.014 \\
+%  & (0.030) & (0.020) & (0.050) & (0.053) & (0.052) & (0.021) & (0.023) & (0.028) & (0.015) \\
+%  DUMMIESday.f19 & 0.071$^{***}$ & $-$0.020 & 0.039 & 0.020 & 0.062 & $-$0.045$^{***}$ & $-$0.038 & $-$0.059$^{***}$ & $-$0.043$^{*}$ \\
+%  & (0.026) & (0.014) & (0.042) & (0.049) & (0.045) & (0.015) & (0.025) & (0.014) & (0.025) \\
+%  DUMMIESday.f20 & 0.094$^{***}$ & 0.012 & 0.048 & 0.026 & 0.066 & 0.006 & 0.002 & $-$0.014 & $-$0.068$^{**}$ \\
+%  & (0.028) & (0.014) & (0.064) & (0.069) & (0.060) & (0.050) & (0.049) & (0.047) & (0.027) \\
+%  DUMMIESday.f21 & 0.056$^{**}$ & $-$0.062$^{***}$ & 0.058 & 0.064 & 0.043 & $-$0.016 & $-$0.055$^{**}$ & $-$0.015 & $-$0.014 \\
+%  & (0.024) & (0.023) & (0.052) & (0.063) & (0.047) & (0.032) & (0.023) & (0.033) & (0.022) \\
+%  DUMMIESday.f22 & 0.040$^{**}$ & $-$0.021 & 0.021 & 0.004 & 0.033 & $-$0.031 & $-$0.011 & $-$0.055$^{*}$ & 0.006 \\
+%  & (0.020) & (0.030) & (0.043) & (0.047) & (0.045) & (0.038) & (0.045) & (0.029) & (0.031) \\
+  L1.RELDPR.MID*L1.NEG.DUMMY & 0.120$^{***}$ & $-$0.016 & $-$0.016 & 0.037$^{*}$ & $-$0.059$^{**}$ & $-$0.034$^{***}$ & $-$0.070$^{***}$ & $-$0.021 & 0.019$^{***}$ \\
+  & (0.016) & (0.042) & (0.010) & (0.021) & (0.024) & (0.012) & (0.020) & (0.021) & (0.005) \\
+  Constant & 0.005 & $-$0.122$^{**}$ & $-$0.126$^{***}$ & $-$0.172$^{***}$ & 0.038 & $-$0.244$^{***}$ & $-$0.137$^{**}$ & $-$0.254$^{***}$ & 0.379$^{***}$ \\
+  & (0.107) & (0.061) & (0.031) & (0.035) & (0.035) & (0.065) & (0.055) & (0.082) & (0.084) \\
+ \hline \\[-1.8ex]
+  Firm Fixed Effects & NO & NO & NO & NO & NO & NO  \\
+Day Dummies & YES & YES & YES & YES & YES & YES  \\
+Lagged Dep. Var. & YES & YES & YES & YES & YES & YES \\
+Observations & 76,398 & 76,398 & 76,398 & 76,398 & 76,398 & 76,398 & 76,398 & 76,398 & 76,398 \\
+R$^{2}$ & 0.881 & 0.282 & 0.303 & 0.286 & 0.227 & 0.258 & 0.198 & 0.185 & 0.567 \\
+Adjusted R$^{2}$ & 0.881 & 0.282 & 0.302 & 0.286 & 0.227 & 0.258 & 0.198 & 0.185 & 0.567 \\
+%F Statistic (df = 32; 76365) & 17,592.170$^{***}$ & 937.834$^{***}$ & 1,035.694$^{***}$ & 955.109$^{***}$ & 701.176$^{***}$ & 829.177$^{***}$ & 588.956$^{***}$ & 541.363$^{***}$ & 3,128.911$^{***}$ \\
+\hline
+\hline \\[-1.8ex]
+\textit{Note:}  & \multicolumn{9}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\
+\end{tabular}}
+\end{table}
+
+\bibliographystyle{apalike}
+\bibliography{bib}
+
+
+\end{document}
+
+
+
+
+
