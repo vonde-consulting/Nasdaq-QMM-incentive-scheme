@@ -25,6 +25,7 @@ git commit -am "My commit comments"
 git push -u origin <your_branch_name>
 ```
 7. Request to merge your change to the master branch
+
   - Log in Github 
   - Get to the repository **vonde-consulting/Nasdaq-QMM-incentive-scheme**
   - Under the **Code** tab, click **branches**
