@@ -14,4 +14,18 @@ cd Nasdaq-QMM-incentive-scheme
 git checkout -b <your_branch_name>
 ```
 4. Work on the branch
+5. Commit your work
+```bash
+git status
+git commit -am "My commit comments"
 
+```
+6. Push the new branch to the repository
+```bash
+git push -u origin <your_branch_name>
+```
+7. Request to merge your change to the master branch
+..1. Log in Github 
+..2. Get to the repository **vonde-consulting/Nasdaq-QMM-incentive-scheme**
+..3. Under the **Code** tab, click **branches**
+..4. Click **New pull request** button next to your branch 
