@@ -1,6 +1,5 @@
 library(sparklyr)
 library(dplyr)
-library(DBI)
 #spark_install(version = "2.4")
 
 HOME <- Sys.getenv("HOME")
