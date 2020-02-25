@@ -53,7 +53,7 @@ Though I believe that in Cluster, R would work well with spark, in local mode us
 ```
 * Make sure your Dropbox has been synchronized
 * Run **Codes/Clean Data/S01_loadData.R**
-* Note that after ``spark_connect(...)`` line, you can monitor spark by a browser at the address ``http://localhost:4040``
+* Note that after ``spark_connect(...)`` line, you can monitor spark at <http://localhost:4040>
 
 ## Introduction to Load Data by Python (Recommanded)
 Python runs smoothly in local mode.
