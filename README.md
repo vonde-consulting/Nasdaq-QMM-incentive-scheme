@@ -40,3 +40,33 @@ git push origin <your_branch_name>
 
 8. Once your pull request has been overviewed and approved by another collaborator, your branch will be able to merge into **master** branch -- the release of our paper and codes. 
 
+## Introduction to Load Data by R (Not Recommended)
+Though I believe that in Cluster, R would work well with spark, in local mode using **sparklyr** is painful . The JVM keeps running out of memory, when I am trying to run a slightly big dataset. 
+* Install packages in R console
+```R
+> install.packages(c("sparklyr", "dplyr", "DBI"))
+```
+* Install spark
+```R
+> library(sparklyr)
+> spark_install(version = "2.4")
+```
+* Make sure your Dropbox has been synchronized
+* Run **Codes/Clean Data/S01_loadData.R**
+* Note that after ``spark_connect(...)`` line, you can monitor spark at <http://localhost:4040>
+
+## Introduction to Load Data by Python (Recommanded)
+Python runs smoothly in local mode.
+* Install pyspark by following the steps at <https://spark.apache.org/downloads.html> 
+* Install Pandas
+* Install Jupyter
+* Start jupyter-notebook by
+```bash
+$ cd Nasdaq-QMM-incentive-scheme/PythonCode
+$ jupyter-notebook
+```
+* Open **lobsterOnSpark.ipynb** on jupyter start page 
+
+
+
+
