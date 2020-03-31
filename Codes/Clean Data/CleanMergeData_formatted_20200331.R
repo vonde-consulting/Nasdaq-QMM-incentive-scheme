@@ -68,7 +68,7 @@ for (i in 1:length(firms)) {
       )
     rm(filename)
     if (nrow(data_o) < 10) {
-      stolp("Skipped it")
+      next
     } #skip if fewer than 10 observations
     ###GET TIMESTAMPS FROM MESSAGE_1 FILE
     filename <-
