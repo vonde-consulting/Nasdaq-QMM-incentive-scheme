@@ -185,10 +185,10 @@ for (i in 1:length(firms)) {
     }
     rm(tradehaltIdx, tradequoteIdx, traderesumeIdx)
     
-    #f<-paste0(mergedDirectory,"/",firms[i])
-    #if (file.exists(f)==F){dir.create(f)}
-    #filename<-paste0(f,"/",firms[i],"_",dates[j],".Rds")
-    #save(data,file=filename)
+    f<-paste0(mergedDirectory,"/",firms[i])
+    if (file.exists(f)==F){dir.create(f)}
+    filename<-paste0(f,"/",firms[i],"_",dates[j],".Rds")
+    save(data,file=filename)
     
   }
 }
