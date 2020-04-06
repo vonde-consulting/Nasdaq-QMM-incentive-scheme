@@ -1,4 +1,28 @@
 function(indexExe, lags, price, direction, sz) {
+  #' Calculate Hasbrouck (1993) pricing errors
+  #'
+  #' @description Calculates the Hasbrouck pricing error during an interval t as either the mean, standard deviation,
+  #' or maximum realization of the measure during the interval t.
+  #' 
+  #' For more details, see .
+  #'
+  #' Define n as the number of observed order book updates during interval t. Define by s the total number of 
+  #' executions during interval t.
+  #' 
+  #'
+  #' @param indexSub Vector of length s indexing which order book updates correspond to order executions
+  #'  (vs. cancellations or submissions) during interval t.
+  #' @param lags Scalar: Number of lags to include in VAR estimation.
+  #' @param price Vector of length n of the prices associated with order book updates during interval t. 
+  #' @param direction Vector of length n of trade directions associated with order book updates (1 for buy, -1 for sell).
+  #' @param sz Vector of length n of the sizes (in terms of number of shares) of order book updates during interval t.
+  #' 
+  #' @usage getHasbrouck(indexExe, lags, price, direction, sz) 
+  #' 
+  #' @return Vector of length 3 containing: (1) mean Hasbrouck measure over interval t; (2) standard deviation
+  #' across Hasbrouck measures during interval t; (3) maximum realization of Hasbrouck measure during interval t.
+  
+  
   #vector autoregressive (VAR) system of differences in log prices ($r_t=\Delta p_t$) and trade-related characteristics $x_t$:
   
   y <- diff(log(price[indexExe]))
@@ -26,7 +50,6 @@ function(indexExe, lags, price, direction, sz) {
                   include.mean = F), silent = T)
   if (class(test) == "try-error") {
     return(c(NA, NA, NA))
-    break
   } #break if estimation is not possible (e.g., singular matrix)
   
   res <- residuals(test)
@@ -56,7 +79,6 @@ function(indexExe, lags, price, direction, sz) {
   #"-1" denotes no constant
   if (class(fit) == "try-error") {
     return(c(NA, NA, NA)) #skip if model estimation is not possible
-    break
   }
   
   #step 3: get reverse cumulative sums of coefficients
@@ -65,20 +87,20 @@ function(indexExe, lags, price, direction, sz) {
   coefs <-
     coefs[(dimx + 1):length(coefs)] #get rid of coefficients on lag 0
   
-  a <- rev(coefs[seq(1, dimx * lags, dimx)]) #coefficients on v1
-  astar <- (-rev(cumsum(a)))
+  astar <- rev(coefs[seq(1, dimx * lags, dimx)]) #coefficients on v1
+  alpha <- (-rev(cumsum(astar)))
   
-  b1 <- rev(coefs[seq(2, dimx * lags, dimx)]) #coefficients on v21
-  b1star <- (-rev(cumsum(b1)))
+  bstar1 <- rev(coefs[seq(2, dimx * lags, dimx)]) #coefficients on v21
+  beta1 <- (-rev(cumsum(bstar1)))
   
-  b2 <- rev(coefs[seq(3, dimx * lags, dimx)]) #coefficients on v22
-  b2star <- (-rev(cumsum(b2)))
+  bstar2 <- rev(coefs[seq(3, dimx * lags, dimx)]) #coefficients on v22
+  beta2 <- (-rev(cumsum(bstar2)))
   
-  b3 <- rev(coefs[seq(4, dimx * lags, dimx)]) #coefficients on v23
-  b3star <- (-rev(cumsum(b3)))
+  bstar3 <- rev(coefs[seq(4, dimx * lags, dimx)]) #coefficients on v23
+  beta3 <- (-rev(cumsum(bstar3)))
   
   #step 4: multiply by errors terms
-  alpha <- c(astar, b1star, b2star, b3star)
+  mmult <- c(alpha, beta1, beta2, beta3)
   cols <-
     c(
       paste0("V1.L", 1:5),
@@ -90,8 +112,8 @@ function(indexExe, lags, price, direction, sz) {
   
   st <- matrix(0, nrow(xmtx), 1)
   
-  for (ii in 1:length(alpha)) {
-    st <- st + (alpha[ii] * xmtx[, ii])
+  for (ii in 1:length(mmult)) {
+    st <- st + (mmult[ii] * xmtx[, ii])
   }
   
   stMean <- mean(st, na.rm = T)
