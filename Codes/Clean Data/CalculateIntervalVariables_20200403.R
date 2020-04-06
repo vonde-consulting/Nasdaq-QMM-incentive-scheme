@@ -1,5 +1,7 @@
 rm(list = ls(all = TRUE))
 library(MTS)
+library(zoo)
+library(docstring)
 
 rootDirectory <- "W:/LOBSTER"
 mergedDirectory <- "W:/LOBSTER/merged"
@@ -71,6 +73,15 @@ data$ssquote[data$direction == -1] <-
 data$mid <- 0.5 * (data$askprice + data$bidprice)
 data$spread <- data$askprice - data$bidprice
 
+#Create Data Table with prices at the beginning of each ss-second interval
+sintervals<-seq(startTrad,endTrad,ss) #timestamp of intervals
+snumInt<-(endTrad-startTrad)/ss #number of intervals
+indexSInt<-findInterval(data$time,sintervals) #assign messages to intervals
+findexSInt<-match(1:snumInt,indexSInt) #find first price within each interval
+ssMid<-as.data.frame(cbind(data$mid[findexSInt],sintervals[1:snumInt])); colnames(ssMid)<-c("mid","time")
+#if mid=NA, that means there were no updates during interval; replace with last observation
+ssMid$mid<-na.locf(ssMid$mid,na.rm=F)
+ssMid$mid<-log(ssMid$mid)
 
 intervals <- seq(startTrad, endTrad, w)
 noint <- (endTrad - startTrad) / w
@@ -227,10 +238,14 @@ endSpread <-
 for (q in 1:noint) {
   cat(paste(tick, date, w, "iteration =", q, "out of", noint, "\n"))
   
-  st <- min(which(data$time > intervals[q]))
-  en <- max(which(data$time <= intervals[q + 1]))
+  #st <- min(which(data$time > intervals[q]))
+  #en <- max(which(data$time <= intervals[q + 1]))
   
-  data_part <- data[st:en, ]
+  index<-which(data$time>=intervals[q]&data$time<intervals[q+1])
+
+  if (length(index)<10){next}
+  
+  data_part <- data[index, ]
   time <- data_part$time
   mpid <- data_part$mpid
   event <- data_part$eventtype
@@ -395,14 +410,14 @@ for (q in 1:noint) {
   volRVpre <- NA
   if (q >= (n + 1)) {
     volRVpre <-
-      getRealizedVolatility(n, delta, K, ss, intervals, q, data$time, data$mid, "PRE")
+      getRealizedVolatility(n, delta, K, ss, intervals, q, ssMid, "PRE")
     volRVpre <- volRVpre * 10000 #in bps
   }
   #POST
   volRVpost <- NA
   if (q <= (noint - n)) {
     volRVpost <-
-      getRealizedVolatility(n, delta, K, ss, intervals, q, data$time, data$mid, "POST")
+      getRealizedVolatility(n, delta, K, ss, intervals, q, ssMid, "POST")
     volRVpost <- volRVpost * 10000
   }
   
