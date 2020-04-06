@@ -150,6 +150,7 @@ for (i in 1:length(firms)) {
     setkey(data_m, clocktime)
     ###MERGE DATASETS
     data <- data_o[data_m, roll = T, mult = "last"]
+    data$time[is.na(data$time) == 1] <- data$i.time[is.na(data$time) == 1]
     data$i.time <- NULL
     rm(data_o, data_m)
     
