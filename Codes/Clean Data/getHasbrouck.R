@@ -84,6 +84,9 @@ function(indexExe, lags, price, direction, sz) {
   #step 3: get reverse cumulative sums of coefficients
   
   coefs <- fit$coefficients
+  
+  if (sum(is.na(coefs))>0){return(c(NA,NA,NA))} #break if some of the coefficients are NA (e.g., due to mullticollinearity)
+  
   coefs <-
     coefs[(dimx + 1):length(coefs)] #get rid of coefficients on lag 0
   
