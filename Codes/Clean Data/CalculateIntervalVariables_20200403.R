@@ -7,7 +7,7 @@ rootDirectory <- "W:/LOBSTER"
 mergedDirectory <- "W:/LOBSTER/merged"
 saveDirectory <- "W:/LOBSTER/Variables"
 codeDirectory <-
-  "C:/DatiLocali/Dropbox/Trader Anonymity/Codes/Clean Data/"
+  "C:/DatiLocali/Dropbox/Trader Anonymity/Nasdaq-QMM-incentive-scheme/Codes/Clean Data/"
 
 #Load Functions
 getMessageType <- dget(paste(codeDirectory, "getMessageType.R", sep = ""))
