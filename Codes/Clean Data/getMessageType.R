@@ -4,16 +4,18 @@ function(condition,
          price,
          bid,
          ask,
-         minlevel,
-         maxlevel,
-         leftBracketClosed,
+         baspr_st,
+         levelSelect,
+         x,
          string1,
          string2) {
   #' Calculate the amount of order book update messages.
   #'
   #' @description This function calculates the amount of limit order book updates (in terms of (1) number of messages,
   #' (2) share volume of messages, and (3) dollar volumes of messages) during a particular interval t.
-  #' Limit order book update types can include submissions, cancellations, and executions.
+  #' Limit order book update types can include submissions, cancellations, and executions. Code can specify to only
+  #' include messages at certain levels of the order book, defined according to a standardized distance 
+  #' away from the best bid or ask (bbo).
   #'
   #' Define n as the number of observed order book update messages during interval t.
   #'
@@ -24,18 +26,15 @@ function(condition,
   #' @param price Vector of length n of prices of order book updates during interval t.
   #' @param bid Vector of length n of bid prices during interval t.
   #' @param ask Vector of length n of ask prices during interval t.
-  #' @param minlevel Scalar specifying the lower-bound level (in terms of the spread distance from best bid or ask)
-  #' to include. For example, minlevel=0 and maxlevel=0 means that only messages at the best bid and ask will be included.
-  #' @param maxlevel Scalar specifying the upper-bound level (in terms of the spread distance from best bid or ask)
-  #' to include. For example, minlevel=1 and maxlevel=10 means that only messages that are priced between 1 and 10
-  #' times the spread away from the best bid or ask will be included.
-  #' @param leftBracketClosed Logical scalar specifying whether left bracket of price interval should be closed or not.
-  #' For example, minlevel=0, maxlevel=1 and leftBracketClosed=0 includes messages that are priced strictly worse than
-  #' the best bid or ask but at least as good as 1 times the half-spread away.
+  #' @param baspr_st Scalar specifying the variable used as the standard measure of distance away from the bbo.
+  #' @param levelSelect Logical vector of length 4 specifying the book levels to include. Possibilities are: (1)
+  #' Price improving; (2) At the BBO, (3) Worse than BBO but less than x times baspr_st away from the bbo; (4) 
+  #' greater than x times baspr_st away from the bbo
+  #' @param x Scalar specifying the cutoff between levels 2 and 2+ of the book
   #' @param string1 String specifying message type (e.g., "SUB","EXE","CANC")
   #' @param string2 String to further modify message type (e.g., "MPID","ANON",etc.)
   #'
-  #' @usage getMessageType(condition,  direction,  sz,  price,  bid,  ask,  setLevel,  minlevel,  maxlevel,  leftBracketClosed,  string1,string2)
+  #' @usage getMessageType(condition, direction, sz,  price,  bid,  ask,  baspr_st,  levelSelect,  x,  string1,  string2)
   #'
   #' @return Vector of length 9 containing amount of messages in terms of: (1) number of buy-side ("BUY.NUM); (2)
   #' number of sell-side ("SELL.NUM"); (3) total number ("ALL.NUM"); (4) share volume of buy-side ("BUY.SVOL"); (5)
@@ -44,22 +43,30 @@ function(condition,
   
   #dollar volumes
   dvol <- price * sz
-  #spread and midquote
-  spr <- (ask - bid)
-  halfspr <- 0.5 * spr
-  mq <- 0.5 * (ask + bid)
+  #best bid and ask
+  bbo<-bid*(direction==1)+ask*(direction==-1)
+  #distance of order away from bbo
+  distance <- direction * (bbo-price)
   
-  distance <- direction * (mq - price)
-  minprice <- (minlevel * halfspr)
-  maxprice <- (maxlevel * halfspr)
+  #orders that are better than the best bid or ask (i.e., distance<0)
+  level0<-distance<0
+
+  #orders that are exactly at the best bid or ask, (i.e., distance==0)
+  level1<-distance==0
   
-  if (leftBracketClosed == 1) {
-    level <- (distance >= minprice & distance <= maxprice)
-  }
-  if (leftBracketClosed == 0) {
-    level <- (distance > minprice & distance <= maxprice)
-  }
+  #orders that are priced between 0 and 3 times the avg spread away from midquote
+  level2<-(distance>0)&(distance<=(x*baspr_st))
   
+  #orders that are priced greater than 3 times the avg spread away from midquote
+  level3<-distance>(x*baspr_st)
+
+  #sanity check -- sum of all level* variables should lead to vector of ones
+  check<-level0+level1+level2+level3
+  if(sum(check!=1)!=0){stop("Levels not properly assigned")}
+  
+  #select levels
+  level<-level0*levelSelect[1]+level1*levelSelect[2]+level2*levelSelect[3]+level3*levelSelect[4]
+
   #modify condition such that only messages at certain price levels are included
   condition <- condition * level
   
@@ -102,16 +109,14 @@ function(condition,
     )
   names(messages) <-
     c(
-      paste0(string1, ".", string2, ".", "BUY.NUM.", minlevel, ".", maxlevel),
+      paste0(string1, ".", string2, ".", "BUY.NUM.", paste0(levelSelect, collapse="")),
       paste0(
         string1,
         ".",
         string2,
         ".",
         "SELL.NUM.",
-        minlevel,
-        ".",
-        maxlevel
+        paste0(levelSelect, collapse="")
       ),
       paste0(
         string1,
@@ -119,9 +124,7 @@ function(condition,
         string2,
         ".",
         "TOTAL.NUM.",
-        minlevel,
-        ".",
-        maxlevel
+        paste0(levelSelect, collapse="")
       ),
       paste0(
         string1,
@@ -129,9 +132,7 @@ function(condition,
         string2,
         ".",
         "BUY.SVOL.",
-        minlevel,
-        ".",
-        maxlevel
+        paste0(levelSelect, collapse="")
       ),
       paste0(
         string1,
@@ -139,9 +140,7 @@ function(condition,
         string2,
         ".",
         "SELL.SVOL.",
-        minlevel,
-        ".",
-        maxlevel
+        paste0(levelSelect, collapse="")
       ),
       paste0(
         string1,
@@ -149,9 +148,7 @@ function(condition,
         string2,
         ".",
         "TOTAL.SVOL.",
-        minlevel,
-        ".",
-        maxlevel
+        paste0(levelSelect, collapse="")
       ),
       paste0(
         string1,
@@ -159,9 +156,7 @@ function(condition,
         string2,
         ".",
         "BUY.DVOL.",
-        minlevel,
-        ".",
-        maxlevel
+        paste0(levelSelect, collapse="")
       ),
       paste0(
         string1,
@@ -169,9 +164,7 @@ function(condition,
         string2,
         ".",
         "SELL.DVOL.",
-        minlevel,
-        ".",
-        maxlevel
+        paste0(levelSelect, collapse="")
       ),
       paste0(
         string1,
@@ -179,9 +172,7 @@ function(condition,
         string2,
         ".",
         "TOTAL.DVOL.",
-        minlevel,
-        ".",
-        maxlevel
+        paste0(levelSelect, collapse="")
       )
     )
   

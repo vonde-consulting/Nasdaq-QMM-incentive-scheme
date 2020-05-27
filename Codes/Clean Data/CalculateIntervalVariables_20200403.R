@@ -39,6 +39,20 @@ ss <- 1 #length of subsamples (in seconds)
 #Number of lags for Hasbrouck Measures
 lags <- 5
 ##############################
+#Specify cutoff between levels 2 and 3 of limit order book (in terms of * avg spr)
+lv<-3
+#############################
+#Load average daily bid-ask spreads
+filename <-paste0(saveDirectory, "TimeWeightedBidAskSpreads_byStockDay.Rds")
+load(filename)
+rm(filename)
+baspr_d <-
+  aggregate(baspr_full[, 3:ncol(baspr_full)],
+            by = list(baspr_full$TICK),
+            mean,
+            na.rm = T)
+rm(baspr_full)
+colnames(baspr_d)<-c("TICK","ABS.SPR.TW","REL.SPR.TW","ABS.SPR","REL.SPR")
 ##############################
 
 #Trading hours (start & end)
@@ -61,7 +75,7 @@ data$mpid <- replace(data$mpid, data$mpid != 0, 1)
 data$mpid <- as.integer(data$mpid)
 
 #Discard if trade is outside of trading hours
-data <- data[data$time >= startTrad & data$time <= endTrad,]
+data <- data[data$time >= startTrad & data$time <= endTrad, ]
 
 #Create Dollar Volume and Depth
 data$dvol <- data$size * data$price
@@ -98,6 +112,9 @@ noint <- (endTrad - startTrad) / w
 
 ## Cycle Through Intervals
 
+pr <-
+  as.data.frame(matrix(NA, noint, 2))
+colnames(pr) <- c("MIDQUOTE", "EXE.PRICE")
 sub <-
   as.data.frame(matrix(NA, noint, 27 * 4))
 temp <-
@@ -132,10 +149,10 @@ temp <-
   )
 colnames(sub) <-
   c(
-    paste0(temp, ".-Inf.Inf"),
-    paste0(temp, ".1.1"),
-    paste0(temp, ".1.3"),
-    paste0(temp, ".3.Inf")
+    paste0(temp, ".1000"),
+    paste0(temp, ".0100"),
+    paste0(temp, ".0010"),
+    paste0(temp, ".0001")
   )
 rm(temp)
 exe <-
@@ -170,7 +187,7 @@ temp <-
     "EXE.ANON.SELL.DVOL",
     "EXE.ANON.TOTAL.DVOL"
   )
-colnames(exe) <- paste0(temp, "-Inf.Inf")
+colnames(exe) <- paste0(temp, "1111")
 rm(temp)
 canc <-
   as.data.frame(matrix(NA, noint, 27))
@@ -204,7 +221,7 @@ temp <-
     "CANC.ANON.SELL.DVOL",
     "CANC.ANON.TOTAL.DVOL"
   )
-colnames(canc) <- paste0(temp, "-Inf.Inf")
+colnames(canc) <- paste0(temp, "1111")
 aggr <-
   as.data.frame(matrix(NA, noint, 6))
 colnames(aggr) <-
@@ -262,13 +279,14 @@ for (q in 1:noint) {
   #st <- min(which(data$time > intervals[q]))
   #en <- max(which(data$time <= intervals[q + 1]))
   
-  index <- which(data$time >= intervals[q] & data$time < intervals[q + 1])
+  index <-
+    which(data$time >= intervals[q] & data$time < intervals[q + 1])
   
   if (length(index) < 10) {
     next
   }
   
-  data_part <- data[index,]
+  data_part <- data[index, ]
   time <- data_part$time
   mpid <- data_part$mpid
   event <- data_part$eventtype
@@ -285,142 +303,157 @@ for (q in 1:noint) {
   depth_sell <- data_part$depth_sell
   depth_all <- data_part$depth_all
   #bid and ask prices immediately prior to messages
-  ask <- data$askprice[(index-1)]
-  bid <- data$bidprice[(index-1)]
-  if (index[1]==1){
-    ask<-c(ask[1],ask); bid<-c(bid[1],bid)
+  ask <- data$askprice[(index - 1)]
+  bid <- data$bidprice[(index - 1)]
+  if (index[1] == 1) {
+    ask <- c(ask[1], ask)
+    bid <- c(bid[1], bid)
   }
   
-  if(length(ask)<length(price)){stop("Something is wrong")}
+  if (length(ask) < length(price)) {
+    stop("Something is wrong")
+  }
   
   numObs <- nrow(data_part)
   
   ###########################################
   ####MESSAGE TYPES
   ###########################################
+  pr[q, ] <- c(mean(mid), mean(price[event == 4 | event == 5]))
+  
+  ###########################################
+  ####MESSAGE TYPES
+  ###########################################
   
   #SUBMISSIONS
+  baspr_st<-baspr_d$ABS.SPR.TW[baspr_d$TICK==tick]
   #All Submissions
   condition <- (event == 1)
-  sub_all <-
+  sub_all_0 <-
     getMessageType(condition,
                    direction,
                    sz,
                    price,
                    bid,
                    ask,
-                   -Inf,
-                   Inf,
-                   1,
+                   baspr_st,
+                   c(1,0,0,0),
+                   lv,
                    "SUB",
                    "ALL")
   #All Submissions at BBO
   sub_all_1 <-
-    getMessageType(condition, direction, sz, price, bid, ask, 1, 1, 1, "SUB", "ALL")
-  #All Submissions at BBO +- 3xhalf-spread
+    getMessageType(condition, direction, sz, price, bid, ask, baspr_st, c(0,1,0,0), lv, "SUB", "ALL")
+  #All Submissions at BBO +- 3x spread
+  sub_all_2 <-
+    getMessageType(condition, direction, sz, price, bid, ask, baspr_st, c(0,0,1,0), lv, "SUB", "ALL")
+  #All Submissions > BBO +- 3x spread
   sub_all_3 <-
-    getMessageType(condition, direction, sz, price, bid, ask, 1, 3, 0, "SUB", "ALL")
-  #All Submissions > BBO +- 3xhalf-spread
-  sub_all_Inf <-
-    getMessageType(condition, direction, sz, price, bid, ask, 3, Inf, 0, "SUB", "ALL")
+    getMessageType(condition, direction, sz, price, bid, ask, baspr_st, c(0,0,0,1), lv, "SUB", "ALL")
+  #sanity check
+  sub_all<-getMessageType(condition, direction, sz, price, bid, ask, baspr_st, c(1,1,1,1), lv, "SUB", "ALL")
+  check<-round(sum(sub_all-(sub_all_0+sub_all_1+sub_all_2+sub_all_3)),digits=5); if (check!=0){stop("Levels don't add up")}; rm(check)
+  rm(sub_all)
   
   #MPID Submissions
   condition <- (event == 1 & mpid == 1)
-  sub_mpid <-
+  sub_mpid_0 <-
     getMessageType(condition,
                    direction,
                    sz,
                    price,
                    bid,
                    ask,
-                   -Inf,
-                   Inf,
-                   1,
+                   baspr_st,
+                   c(1,0,0,0),
+                   lv,
                    "SUB",
                    "MPID")
   #MPID Submissions at BBO
   sub_mpid_1 <-
-    getMessageType(condition, direction, sz, price, bid, ask, 1, 1, 1, "SUB", "MPID")
-  #MPID Submissions at BBO +- 3xhalf-spread
+    getMessageType(condition, direction, sz, price, bid, ask, baspr_st, c(0,1,0,0), lv, "SUB", "MPID")
+  #MPID Submissions at BBO +- 3x spread
+  sub_mpid_2 <-
+    getMessageType(condition, direction, sz, price, bid, ask, baspr_st, c(0,0,1,0), lv, "SUB", "MPID")
+  #MPID Submissions > BBO +- 3x spread
   sub_mpid_3 <-
-    getMessageType(condition, direction, sz, price, bid, ask, 1, 3, 0, "SUB", "MPID")
-  #MPID Submissions > BBO +- 3xhalf-spread
-  sub_mpid_Inf <-
     getMessageType(condition,
                    direction,
                    sz,
                    price,
                    bid,
                    ask,
-                   3,
-                   Inf,
-                   0,
+                   baspr_st,
+                   c(0,0,0,1),
+                   lv,
                    "SUB",
                    "MPID")
+  #sanity check
+  sub_mpid<-getMessageType(condition, direction, sz, price, bid, ask, baspr_st, c(1,1,1,1), lv, "SUB", "ALL")
+  check<-round(sum(sub_mpid-(sub_mpid_0+sub_mpid_1+sub_mpid_2+sub_mpid_3)),digits=5); if (check!=0){stop("Levels don't add up")}; rm(check)
+  rm(sub_mpid)
   
   #Anonymous Submissions
   condition <- (event == 1 & mpid == 0)
-  sub_anon <-
+  sub_anon_0 <-
     getMessageType(condition,
                    direction,
                    sz,
                    price,
                    bid,
                    ask,
-                   -Inf,
-                   Inf,
-                   0,
+                   baspr_st,
+                   c(1,0,0,0),
+                   lv,
                    "SUB",
                    "ANON")
-  #MPID Submissions at BBO
+  #Anonymous Submissions at BBO
   sub_anon_1 <-
-    getMessageType(condition, direction, sz, price, bid, ask, 1, 1, 1, "SUB", "ANON")
-  #MPID Submissions at BBO +- 3xhalf-spread
+    getMessageType(condition, direction, sz, price, bid, ask, baspr_st, c(0,1,0,0), lv, "SUB", "ANON")
+  #Anonymous Submissions at BBO +- 3xspread
+  sub_anon_2 <-
+    getMessageType(condition, direction, sz, price, bid, ask, baspr_st, c(0,0,1,0), lv, "SUB", "ANON")
+  #Anonymous Submissions > BBO +- 3xspread
   sub_anon_3 <-
-    getMessageType(condition, direction, sz, price, bid, ask, 1, 3, 0, "SUB", "ANON")
-  #MPID Submissions > BBO +- 3xhalf-spread
-  sub_anon_Inf <-
     getMessageType(condition,
                    direction,
                    sz,
                    price,
                    bid,
                    ask,
-                   3,
-                   Inf,
-                   0,
+                   baspr_st,
+                   c(0,0,0,1),
+                   lv,
                    "SUB",
                    "ANON")
+  #sanity check
+  sub_anon<-getMessageType(condition, direction, sz, price, bid, ask, baspr_st, c(1,1,1,1), lv, "SUB", "ALL")
+  check<-round(sum(sub_anon-(sub_anon_0+sub_anon_1+sub_anon_2+sub_anon_3)),digits=5); if (check!=0){stop("Levels don't add up")}; rm(check)
+  rm(sub_anon)
   
-  sub[q,] <-
+  #quick sanity check
+  check<-round(sum(sub_all_0-(sub_mpid_0+sub_anon_0)),digits=5); if (check!=0){stop("MPID and Anon orders don't add up")}; rm(check)
+  check<-round(sum(sub_all_1-(sub_mpid_1+sub_anon_1)),digits=5); if (check!=0){stop("MPID and Anon orders don't add up")}; rm(check)  
+  check<-round(sum(sub_all_2-(sub_mpid_2+sub_anon_2)),digits=5); if (check!=0){stop("MPID and Anon orders don't add up")}; rm(check)
+  check<-round(sum(sub_all_3-(sub_mpid_3+sub_anon_3)),digits=5); if (check!=0){stop("MPID and Anon orders don't add up")}; rm(check)
+  
+  sub[q, ] <-
     c(
-      sub_all,
+      sub_all_0,
+      sub_mpid_0,
+      sub_anon_0,
       sub_all_1,
-      sub_all_3,
-      sub_all_Inf,
-      sub_mpid,
       sub_mpid_1,
-      sub_mpid_3,
-      sub_mpid_Inf,
-      sub_anon,
       sub_anon_1,
-      sub_anon_3,
-      sub_anon_Inf
+      sub_all_2,
+      sub_mpid_2,
+      sub_anon_2,      
+      sub_all_3,
+      sub_mpid_3,
+      sub_anon_3
     )
-  rm(
-    sub_all,
-    sub_all_1,
-    sub_all_3,
-    sub_all_Inf,
-    sub_mpid,
-    sub_mpid_1,
-    sub_mpid_3,
-    sub_mpid_Inf,
-    sub_anon,
-    sub_anon_1,
-    sub_anon_3,
-    sub_anon_Inf
-  )
+  
+  if (sum(is.na(sub[q, ]))>0){stop("Missing submission info")}
   
   #EXECUTIONS
   #All Executions
@@ -432,9 +465,9 @@ for (q in 1:noint) {
                    price,
                    bid,
                    ask,
-                   -Inf,
-                   Inf,
-                   0,
+                   baspr_st,
+                   c(1,1,1,1),
+                   lv,
                    "EXE",
                    "ALL")
   #MPID Executions
@@ -446,9 +479,9 @@ for (q in 1:noint) {
                    price,
                    bid,
                    ask,
-                   -Inf,
-                   Inf,
-                   0,
+                   baspr_st,
+                   c(1,1,1,1),
+                   lv,
                    "EXE",
                    "MPID")
   #Anonymous Executions
@@ -460,13 +493,13 @@ for (q in 1:noint) {
                    price,
                    bid,
                    ask,
-                   -Inf,
-                   Inf,
-                   0,
+                   baspr_st,
+                   c(1,1,1,1),
+                   lv,
                    "EXE",
                    "ANON")
   
-  exe[q,] <- c(exe_all, exe_mpid, exe_anon)
+  exe[q, ] <- c(exe_all, exe_mpid, exe_anon)
   rm(exe_all, exe_mpid, exe_anon)
   
   #CANCELLATIONS
@@ -479,9 +512,9 @@ for (q in 1:noint) {
                    price,
                    bid,
                    ask,
-                   -Inf,
-                   Inf,
-                   1,
+                   baspr_st,
+                   c(1,1,1,1),
+                   lv,
                    "CANC",
                    "ALL")
   #MPID Cancellations
@@ -493,9 +526,9 @@ for (q in 1:noint) {
                    price,
                    bid,
                    ask,
-                   -Inf,
-                   Inf,
-                   1,
+                   baspr_st,
+                   c(1,1,1,1),
+                   lv,
                    "CANC",
                    "MPID")
   #Anonymous Cancellations
@@ -507,13 +540,13 @@ for (q in 1:noint) {
                    price,
                    bid,
                    ask,
-                   -Inf,
-                   Inf,
-                   1,
+                   baspr_st,
+                   c(1,1,1,1),
+                   lv,
                    "CANC",
                    "ANON")
   
-  canc[q,] <- c(canc_all, canc_mpid, canc_anon)
+  canc[q, ] <- c(canc_all, canc_mpid, canc_anon)
   rm(canc_all, canc_mpid, canc_anon)
   
   ###########################################
@@ -542,7 +575,7 @@ for (q in 1:noint) {
     getAggressiveness(direction, price, mid, ssquote, indexSub, "ANON")
   rm(indexSub)
   
-  aggr[q,] <- c(aggr_all, aggr_mpid, aggr_anon)
+  aggr[q, ] <- c(aggr_all, aggr_mpid, aggr_anon)
   rm(aggr_all, aggr_mpid, aggr_anon)
   
   #ORDER SIZE
@@ -561,13 +594,13 @@ for (q in 1:noint) {
   indexSub <- indexSub[indexSub != 1]
   orsz_anon <- getOrderSize(price, sz, indexSub, "ANON")
   
-  orsz[q,] <- c(orsz_all, orsz_mpid, orsz_anon)
+  orsz[q, ] <- c(orsz_all, orsz_mpid, orsz_anon)
   rm(orsz_all, orsz_mpid, orsz_anon)
   
   ###########################################
   ####DEPTH
   ###########################################
-  depth[q,] <-
+  depth[q, ] <-
     c(
       mean(bidsz),
       mean(asksz),
@@ -585,14 +618,14 @@ for (q in 1:noint) {
   dPriceRel <-
     (mid[numObs] - mid[1]) / (mid[1]) #percentage change in midquote
   
-  pricemov[q,] <- c(dPriceAbs, dPriceRel)
+  pricemov[q, ] <- c(dPriceAbs, dPriceRel)
   
   ###########################################
   ####SPREADS
   ###########################################
   
   #TIME-WEIGHTED BID ASK SPREADS
-  baspr[q,] <-
+  baspr[q, ] <-
     getTWSpreads(endSpread, spread, mid, time, intervals, q)
   
   endSpread <-
@@ -629,7 +662,7 @@ for (q in 1:noint) {
     volRVpost <- volRVpost * 10000
   }
   
-  vol[q,] <- c(volSd, volRVpre, volRVpost)
+  vol[q, ] <- c(volSd, volRVpre, volRVpost)
   rm(volSd, volRVpre, volRVpost)
   
   ###########################################
@@ -639,14 +672,17 @@ for (q in 1:noint) {
   indexExe <- which(event == 4 | event == 5) #index of executions
   #require at least 50 execution prices
   if (length(indexExe) >= 50) {
-    hasbrouck[q,] <- getHasbrouck(indexExe, lags, price, direction, sz)
+    hasbrouck[q, ] <- getHasbrouck(indexExe, lags, price, direction, sz)
   }
   rm(indexExe)
   
 }
 
 dataf <-
-  cbind(sub, exe, canc, aggr, orsz, depth, pricemov, baspr, vol, hasbrouck)
+  cbind(pr, sub, exe, canc, aggr, orsz, depth, pricemov, baspr, vol, hasbrouck)
+dataf$TIME <- intervals[-length(intervals)]
+dataf$DATE <- date
+
 f <- paste0(saveDirectory, "/", tick)
 if (file.exists(f) == F) {
   dir.create(f)
