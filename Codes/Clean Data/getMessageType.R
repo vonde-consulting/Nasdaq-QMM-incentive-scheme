@@ -61,8 +61,8 @@ function(condition,
   level3<-distance>(x*baspr_st)
 
   #sanity check -- sum of all level* variables should lead to vector of ones
-  check<-level0+level1+level2+level3
-  if(sum(check!=1)!=0){stop("Levels not properly assigned")}
+  check<-level0+level1+level2+level3 
+  if(sum(check!=1,na.rm=T)!=0){stop("Levels not properly assigned")}
   
   #select levels
   level<-level0*levelSelect[1]+level1*levelSelect[2]+level2*levelSelect[3]+level3*levelSelect[4]
@@ -71,29 +71,34 @@ function(condition,
   condition <- condition * level
   
   #In Terms of Numbers of Messages
-  totalNum <- sum(condition)
-  buyNum <- sum(condition & direction == 1)
-  sellNum <- sum(condition & direction == -1)
-  if (buyNum + sellNum != totalNum) {
+  totalNum <- sum(condition,na.rm=T)
+  buyNum <- sum(condition & direction == 1,na.rm=T)
+  sellNum <- sum(condition & direction == -1,na.rm=T)
+  check<-round(sum(totalNum-(buyNum+sellNum),na.rm=T),digits=5)
+  if (check!=0) {
     stop("Buy and Sell numbers don't add up")
   }
+  rm(check)
   
   #In Terms of Share Volumes of Messages
-  totalSVol <- sum(condition * sz)
-  buySVol <- sum((condition & direction == 1) * sz)
-  sellSVol <- sum((condition & direction == -1) * sz)
-  if (buySVol + sellSVol != totalSVol) {
+  totalSVol <- sum(condition * sz,na.rm=T)
+  buySVol <- sum((condition & direction == 1) * sz,na.rm=T)
+  sellSVol <- sum((condition & direction == -1) * sz,na.rm=T)
+  check<-round(sum(totalSVol-(buySVol+sellSVol),na.rm=T),digits=5)
+  if (check!=0) {
     stop("Buy and Sell share volumes don't add up")
   }
+  rm(check)
   
   #In Terms of Dollar Volumes of Messages
-  totalDVol <- sum(condition * dvol)
-  buyDVol <- sum((condition & direction == 1) * dvol)
-  sellDVol <- sum((condition & direction == -1) * dvol)
-  if (round(buyDVol + sellDVol, digits = 4) != round(totalDVol, digits =
-                                                     4)) {
+  totalDVol <- sum(condition * dvol,na.rm=T)
+  buyDVol <- sum((condition & direction == 1) * dvol,na.rm=T)
+  sellDVol <- sum((condition & direction == -1) * dvol,na.rm=T)
+  check<-round(sum(totalDVol-(buyDVol+sellDVol),na.rm=T),digits=5)
+  if (check!=0) {
     stop("Buy and Sell dollar volumes don't add up")
   }
+  rm(check)
   
   messages <-
     c(
